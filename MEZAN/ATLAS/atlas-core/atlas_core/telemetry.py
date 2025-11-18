@@ -16,13 +16,19 @@ import psutil
 import threading
 import time
 import logging
+import re
+import yaml
+import smtplib
+import requests
 from collections import defaultdict, deque
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any, Callable, Tuple
+from typing import Dict, List, Optional, Any, Callable, Tuple, Union
 from pathlib import Path
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import numpy as np
 from abc import ABC, abstractmethod
 
@@ -37,15 +43,86 @@ class MetricType(Enum):
     SUMMARY = "summary"
 
 
+class AlertSeverity(Enum):
+    """Alert severity levels."""
+    INFO = "info"
+    WARNING = "warning"
+    CRITICAL = "critical"
+    ERROR = "error"
+
+
+class AlertState(Enum):
+    """Alert states."""
+    PENDING = "pending"
+    FIRING = "firing"
+    RESOLVED = "resolved"
+    ACKNOWLEDGED = "acknowledged"
+    SILENCED = "silenced"
+
+
 @dataclass
 class AlertRule:
     """Configuration for metric alert thresholds."""
     metric_name: str
     threshold: float
-    condition: str  # 'above', 'below', 'equals'
+    condition: str  # 'above', 'below', 'equals', 'range', 'rate'
     duration_seconds: int = 60
     callback: Optional[Callable] = None
     severity: str = "warning"  # 'info', 'warning', 'critical'
+    labels: Dict[str, str] = field(default_factory=dict)
+    annotations: Dict[str, str] = field(default_factory=dict)
+    grouping_keys: List[str] = field(default_factory=list)
+    repeat_interval: int = 3600  # seconds
+    mute_duration: int = 0  # seconds
+    threshold_low: Optional[float] = None  # for range condition
+    rate_window: int = 60  # seconds for rate calculation
+    anomaly_detection: bool = False
+    expression: Optional[str] = None  # custom expression
+
+    def evaluate(self, value: float, history: Optional[List[Tuple[float, float]]] = None) -> bool:
+        """Evaluate if rule is triggered."""
+        if self.condition == 'above':
+            return value > self.threshold
+        elif self.condition == 'below':
+            return value < self.threshold
+        elif self.condition == 'equals':
+            return abs(value - self.threshold) < 0.001
+        elif self.condition == 'range':
+            return self.threshold_low <= value <= self.threshold
+        elif self.condition == 'rate' and history:
+            # Calculate rate of change
+            if len(history) < 2:
+                return False
+            recent = history[-min(10, len(history)):]
+            rates = [(recent[i+1][1] - recent[i][1]) / (recent[i+1][0] - recent[i][0])
+                    for i in range(len(recent)-1)]
+            avg_rate = sum(rates) / len(rates) if rates else 0
+            return abs(avg_rate) > self.threshold
+        elif self.expression:
+            # Custom expression evaluation
+            try:
+                return eval(self.expression, {"value": value, "threshold": self.threshold})
+            except:
+                return False
+        return False
+
+
+@dataclass
+class Alert:
+    """Active alert instance."""
+    rule: AlertRule
+    value: float
+    state: AlertState
+    start_time: float
+    last_notification: float
+    fingerprint: str
+    labels: Dict[str, str]
+    annotations: Dict[str, str]
+    acknowledged_by: Optional[str] = None
+    acknowledged_at: Optional[float] = None
+    resolved_at: Optional[float] = None
+    notification_count: int = 0
+    silence_until: Optional[float] = None
 
 
 @dataclass
@@ -340,68 +417,471 @@ class AnomalyDetector:
         return [a for a in self._anomalies if a['timestamp'] >= since]
 
 
-class AlertManager:
-    """Manages metric alerts and notifications."""
+class AlertChannel(ABC):
+    """Abstract base class for alert notification channels."""
 
-    def __init__(self):
+    @abstractmethod
+    def send(self, alert: Alert) -> bool:
+        """Send alert notification."""
+        pass
+
+    @abstractmethod
+    def test_connection(self) -> bool:
+        """Test channel connectivity."""
+        pass
+
+
+class EmailAlertChannel(AlertChannel):
+    """Email notification channel."""
+
+    def __init__(self, smtp_host: str, smtp_port: int, username: str, password: str,
+                 from_addr: str, to_addrs: List[str], use_tls: bool = True):
+        self.smtp_host = smtp_host
+        self.smtp_port = smtp_port
+        self.username = username
+        self.password = password
+        self.from_addr = from_addr
+        self.to_addrs = to_addrs
+        self.use_tls = use_tls
+
+    def send(self, alert: Alert) -> bool:
+        """Send alert via email."""
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = self.from_addr
+            msg['To'] = ', '.join(self.to_addrs)
+            msg['Subject'] = f"[{alert.rule.severity.upper()}] Alert: {alert.rule.metric_name}"
+
+            body = f"""
+Alert Details:
+--------------
+Metric: {alert.rule.metric_name}
+Condition: {alert.rule.condition} {alert.rule.threshold}
+Current Value: {alert.value}
+Severity: {alert.rule.severity}
+Start Time: {datetime.fromtimestamp(alert.start_time)}
+State: {alert.state.value}
+
+Labels: {json.dumps(alert.labels, indent=2)}
+Annotations: {json.dumps(alert.annotations, indent=2)}
+            """
+
+            msg.attach(MIMEText(body, 'plain'))
+
+            server = smtplib.SMTP(self.smtp_host, self.smtp_port)
+            if self.use_tls:
+                server.starttls()
+            server.login(self.username, self.password)
+            server.send_message(msg)
+            server.quit()
+
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send email alert: {e}")
+            return False
+
+    def test_connection(self) -> bool:
+        """Test SMTP connectivity."""
+        try:
+            server = smtplib.SMTP(self.smtp_host, self.smtp_port)
+            if self.use_tls:
+                server.starttls()
+            server.login(self.username, self.password)
+            server.quit()
+            return True
+        except:
+            return False
+
+
+class SlackAlertChannel(AlertChannel):
+    """Slack notification channel."""
+
+    def __init__(self, webhook_url: str, channel: Optional[str] = None,
+                 username: str = "MEZAN Alerts"):
+        self.webhook_url = webhook_url
+        self.channel = channel
+        self.username = username
+
+    def send(self, alert: Alert) -> bool:
+        """Send alert to Slack."""
+        try:
+            color_map = {
+                'critical': 'danger',
+                'warning': 'warning',
+                'info': 'good',
+                'error': 'danger'
+            }
+
+            payload = {
+                "username": self.username,
+                "attachments": [{
+                    "color": color_map.get(alert.rule.severity, 'warning'),
+                    "title": f"Alert: {alert.rule.metric_name}",
+                    "fields": [
+                        {"title": "Condition", "value": f"{alert.rule.condition} {alert.rule.threshold}", "short": True},
+                        {"title": "Current Value", "value": str(alert.value), "short": True},
+                        {"title": "Severity", "value": alert.rule.severity.upper(), "short": True},
+                        {"title": "State", "value": alert.state.value, "short": True}
+                    ],
+                    "footer": "MEZAN Monitoring",
+                    "ts": int(alert.start_time)
+                }]
+            }
+
+            if self.channel:
+                payload["channel"] = self.channel
+
+            response = requests.post(self.webhook_url, json=payload, timeout=5)
+            return response.status_code == 200
+        except Exception as e:
+            logger.error(f"Failed to send Slack alert: {e}")
+            return False
+
+    def test_connection(self) -> bool:
+        """Test Slack webhook connectivity."""
+        try:
+            payload = {"text": "Test connection from MEZAN monitoring"}
+            response = requests.post(self.webhook_url, json=payload, timeout=5)
+            return response.status_code == 200
+        except:
+            return False
+
+
+class PagerDutyAlertChannel(AlertChannel):
+    """PagerDuty notification channel."""
+
+    def __init__(self, integration_key: str, api_url: str = "https://events.pagerduty.com/v2/enqueue"):
+        self.integration_key = integration_key
+        self.api_url = api_url
+
+    def send(self, alert: Alert) -> bool:
+        """Send alert to PagerDuty."""
+        try:
+            severity_map = {
+                'critical': 'critical',
+                'error': 'error',
+                'warning': 'warning',
+                'info': 'info'
+            }
+
+            payload = {
+                "routing_key": self.integration_key,
+                "event_action": "trigger" if alert.state == AlertState.FIRING else "resolve",
+                "dedup_key": alert.fingerprint,
+                "payload": {
+                    "summary": f"{alert.rule.metric_name}: {alert.rule.condition} {alert.rule.threshold}",
+                    "severity": severity_map.get(alert.rule.severity, 'warning'),
+                    "source": "MEZAN",
+                    "component": alert.rule.metric_name,
+                    "custom_details": {
+                        "value": alert.value,
+                        "labels": alert.labels,
+                        "annotations": alert.annotations
+                    }
+                }
+            }
+
+            response = requests.post(self.api_url, json=payload, timeout=5)
+            return response.status_code == 202
+        except Exception as e:
+            logger.error(f"Failed to send PagerDuty alert: {e}")
+            return False
+
+    def test_connection(self) -> bool:
+        """Test PagerDuty API connectivity."""
+        try:
+            # Send a test event that auto-resolves
+            test_payload = {
+                "routing_key": self.integration_key,
+                "event_action": "trigger",
+                "dedup_key": f"test-{time.time()}",
+                "payload": {
+                    "summary": "MEZAN test alert",
+                    "severity": "info",
+                    "source": "MEZAN"
+                }
+            }
+            response = requests.post(self.api_url, json=test_payload, timeout=5)
+
+            if response.status_code == 202:
+                # Auto-resolve the test alert
+                resolve_payload = test_payload.copy()
+                resolve_payload["event_action"] = "resolve"
+                requests.post(self.api_url, json=resolve_payload, timeout=5)
+
+            return response.status_code == 202
+        except:
+            return False
+
+
+class WebhookAlertChannel(AlertChannel):
+    """Generic webhook notification channel."""
+
+    def __init__(self, url: str, headers: Optional[Dict[str, str]] = None,
+                 method: str = "POST", timeout: int = 10):
+        self.url = url
+        self.headers = headers or {}
+        self.method = method
+        self.timeout = timeout
+
+    def send(self, alert: Alert) -> bool:
+        """Send alert via webhook."""
+        try:
+            payload = {
+                "alert": {
+                    "metric": alert.rule.metric_name,
+                    "condition": f"{alert.rule.condition} {alert.rule.threshold}",
+                    "value": alert.value,
+                    "severity": alert.rule.severity,
+                    "state": alert.state.value,
+                    "start_time": alert.start_time,
+                    "fingerprint": alert.fingerprint,
+                    "labels": alert.labels,
+                    "annotations": alert.annotations
+                }
+            }
+
+            response = requests.request(
+                self.method, self.url, json=payload,
+                headers=self.headers, timeout=self.timeout
+            )
+            return response.status_code < 400
+        except Exception as e:
+            logger.error(f"Failed to send webhook alert: {e}")
+            return False
+
+    def test_connection(self) -> bool:
+        """Test webhook connectivity."""
+        try:
+            response = requests.request(
+                "GET" if self.method == "GET" else self.method,
+                self.url, headers=self.headers, timeout=5
+            )
+            return response.status_code < 500
+        except:
+            return False
+
+
+class AlertManager:
+    """Enhanced alert management with multiple channels and deduplication."""
+
+    def __init__(self, rate_limit_window: int = 60, max_alerts_per_window: int = 10):
         self.rules = []
-        self._active_alerts = {}
-        self._alert_history = []
-        self._lock = threading.Lock()
+        self.channels: Dict[str, AlertChannel] = {}
+        self._active_alerts: Dict[str, Alert] = {}
+        self._alert_history = deque(maxlen=10000)
+        self._silences: Dict[str, float] = {}  # fingerprint -> silence_until
+        self._lock = threading.RLock()
+        self._rate_limiter = defaultdict(lambda: deque(maxlen=max_alerts_per_window))
+        self.rate_limit_window = rate_limit_window
+        self.max_alerts_per_window = max_alerts_per_window
+        self._pending_alerts: Dict[str, Tuple[float, Alert]] = {}  # For duration tracking
+        self._metric_history = defaultdict(lambda: deque(maxlen=1000))
+
+    def add_channel(self, name: str, channel: AlertChannel):
+        """Add notification channel."""
+        with self._lock:
+            self.channels[name] = channel
+            logger.info(f"Added alert channel: {name}")
 
     def add_rule(self, rule: AlertRule):
         """Add alert rule."""
         with self._lock:
             self.rules.append(rule)
+            logger.info(f"Added alert rule: {rule.metric_name}")
 
-    def check_alerts(self, metrics: Dict[str, float]):
-        """Check metrics against alert rules."""
+    def load_rules_from_yaml(self, yaml_path: str):
+        """Load alert rules from YAML configuration."""
+        with open(yaml_path, 'r') as f:
+            config = yaml.safe_load(f)
+
+        for rule_config in config.get('rules', []):
+            rule = AlertRule(**rule_config)
+            self.add_rule(rule)
+
+        logger.info(f"Loaded {len(config.get('rules', []))} rules from {yaml_path}")
+
+    def acknowledge_alert(self, fingerprint: str, acknowledged_by: str):
+        """Acknowledge an alert."""
         with self._lock:
+            if fingerprint in self._active_alerts:
+                alert = self._active_alerts[fingerprint]
+                alert.state = AlertState.ACKNOWLEDGED
+                alert.acknowledged_by = acknowledged_by
+                alert.acknowledged_at = time.time()
+                logger.info(f"Alert {fingerprint} acknowledged by {acknowledged_by}")
+
+    def silence_alert(self, fingerprint: str, duration_seconds: int):
+        """Silence an alert for specified duration."""
+        with self._lock:
+            silence_until = time.time() + duration_seconds
+            self._silences[fingerprint] = silence_until
+            if fingerprint in self._active_alerts:
+                self._active_alerts[fingerprint].silence_until = silence_until
+            logger.info(f"Alert {fingerprint} silenced until {datetime.fromtimestamp(silence_until)}")
+
+    def _generate_fingerprint(self, rule: AlertRule, labels: Dict[str, str]) -> str:
+        """Generate unique fingerprint for alert deduplication."""
+        parts = [rule.metric_name, rule.condition, str(rule.threshold)]
+        for key in sorted(rule.grouping_keys):
+            if key in labels:
+                parts.append(f"{key}:{labels[key]}")
+        return "|".join(parts)
+
+    def _should_rate_limit(self, fingerprint: str) -> bool:
+        """Check if alert should be rate limited."""
+        current_time = time.time()
+        rate_limit_queue = self._rate_limiter[fingerprint]
+
+        # Remove old entries outside the window
+        while rate_limit_queue and rate_limit_queue[0] < current_time - self.rate_limit_window:
+            rate_limit_queue.popleft()
+
+        # Check if we've exceeded the limit
+        if len(rate_limit_queue) >= self.max_alerts_per_window:
+            return True
+
+        # Add current time to queue
+        rate_limit_queue.append(current_time)
+        return False
+
+    def _send_notification(self, alert: Alert):
+        """Send notification through configured channels."""
+        # Check if alert is silenced
+        if alert.silence_until and time.time() < alert.silence_until:
+            return
+
+        # Check rate limiting
+        if self._should_rate_limit(alert.fingerprint):
+            logger.warning(f"Rate limited alert: {alert.fingerprint}")
+            return
+
+        # Check repeat interval
+        if alert.last_notification and time.time() - alert.last_notification < alert.rule.repeat_interval:
+            return
+
+        # Send to all configured channels
+        for channel_name, channel in self.channels.items():
+            try:
+                if channel.send(alert):
+                    logger.info(f"Alert sent via {channel_name}: {alert.fingerprint}")
+                else:
+                    logger.error(f"Failed to send alert via {channel_name}: {alert.fingerprint}")
+            except Exception as e:
+                logger.error(f"Error sending alert via {channel_name}: {e}")
+
+        alert.last_notification = time.time()
+        alert.notification_count += 1
+
+    def check_alerts(self, metrics: Dict[str, float], labels: Optional[Dict[str, str]] = None):
+        """Enhanced alert checking with deduplication and state management."""
+        current_time = time.time()
+        labels = labels or {}
+
+        with self._lock:
+            # Store metric history
+            for metric_name, value in metrics.items():
+                self._metric_history[metric_name].append((current_time, value))
+
             for rule in self.rules:
                 if rule.metric_name not in metrics:
                     continue
 
                 value = metrics[rule.metric_name]
-                triggered = False
+                history = list(self._metric_history[rule.metric_name])
 
-                if rule.condition == 'above' and value > rule.threshold:
-                    triggered = True
-                elif rule.condition == 'below' and value < rule.threshold:
-                    triggered = True
-                elif rule.condition == 'equals' and value == rule.threshold:
-                    triggered = True
+                # Check if rule is triggered
+                triggered = rule.evaluate(value, history)
 
-                alert_key = f"{rule.metric_name}_{rule.condition}_{rule.threshold}"
+                # Check for anomaly detection
+                if rule.anomaly_detection and not triggered:
+                    # Use the anomaly detector if available
+                    pass
+
+                # Generate fingerprint for deduplication
+                alert_labels = {**labels, **rule.labels}
+                fingerprint = self._generate_fingerprint(rule, alert_labels)
 
                 if triggered:
-                    if alert_key not in self._active_alerts:
-                        # New alert
-                        alert = {
-                            'rule': rule,
-                            'value': value,
-                            'start_time': time.time(),
-                            'severity': rule.severity
-                        }
-                        self._active_alerts[alert_key] = alert
-                        self._alert_history.append(alert)
-
-                        if rule.callback:
-                            try:
-                                rule.callback(rule, value)
-                            except Exception as e:
-                                logger.error(f"Alert callback error: {e}")
-
-                        logger.warning(f"Alert triggered: {rule.metric_name} {rule.condition} {rule.threshold}, value: {value}")
+                    if fingerprint in self._pending_alerts:
+                        # Check if duration threshold met
+                        pending_start, pending_alert = self._pending_alerts[fingerprint]
+                        if current_time - pending_start >= rule.duration_seconds:
+                            # Move from pending to active
+                            if fingerprint not in self._active_alerts:
+                                alert = Alert(
+                                    rule=rule,
+                                    value=value,
+                                    state=AlertState.FIRING,
+                                    start_time=pending_start,
+                                    last_notification=0,
+                                    fingerprint=fingerprint,
+                                    labels=alert_labels,
+                                    annotations={**rule.annotations, "value": str(value)}
+                                )
+                                self._active_alerts[fingerprint] = alert
+                                self._alert_history.append(alert)
+                                self._send_notification(alert)
+                                del self._pending_alerts[fingerprint]
+                                logger.warning(f"Alert firing: {rule.metric_name} {rule.condition} {rule.threshold}, value: {value}")
+                    else:
+                        # New pending alert
+                        if fingerprint not in self._active_alerts:
+                            pending_alert = Alert(
+                                rule=rule,
+                                value=value,
+                                state=AlertState.PENDING,
+                                start_time=current_time,
+                                last_notification=0,
+                                fingerprint=fingerprint,
+                                labels=alert_labels,
+                                annotations={**rule.annotations, "value": str(value)}
+                            )
+                            self._pending_alerts[fingerprint] = (current_time, pending_alert)
+                            logger.debug(f"Alert pending: {fingerprint}")
                 else:
-                    # Alert resolved
-                    if alert_key in self._active_alerts:
-                        del self._active_alerts[alert_key]
+                    # Alert condition not met
+                    if fingerprint in self._pending_alerts:
+                        del self._pending_alerts[fingerprint]
+                        logger.debug(f"Pending alert cleared: {fingerprint}")
+
+                    if fingerprint in self._active_alerts:
+                        # Alert resolved
+                        alert = self._active_alerts[fingerprint]
+                        alert.state = AlertState.RESOLVED
+                        alert.resolved_at = current_time
+                        alert.value = value
+                        self._send_notification(alert)
+                        del self._active_alerts[fingerprint]
                         logger.info(f"Alert resolved: {rule.metric_name}")
 
-    def get_active_alerts(self) -> List[Dict]:
+    def get_active_alerts(self) -> List[Alert]:
         """Get currently active alerts."""
         with self._lock:
             return list(self._active_alerts.values())
+
+    def get_alert_history(self, since: Optional[float] = None) -> List[Alert]:
+        """Get alert history."""
+        with self._lock:
+            if since is None:
+                return list(self._alert_history)
+            return [a for a in self._alert_history if a.start_time >= since]
+
+    def get_alerts_by_severity(self, severity: str) -> List[Alert]:
+        """Get active alerts by severity."""
+        with self._lock:
+            return [a for a in self._active_alerts.values() if a.rule.severity == severity]
+
+    def test_channels(self) -> Dict[str, bool]:
+        """Test all configured channels."""
+        results = {}
+        for name, channel in self.channels.items():
+            try:
+                results[name] = channel.test_connection()
+            except Exception as e:
+                logger.error(f"Failed to test channel {name}: {e}")
+                results[name] = False
+        return results
 
 
 class MetricsCollector:
