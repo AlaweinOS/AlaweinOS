@@ -79,6 +79,21 @@ from atlas_core.causal_engine import (
     create_causal_engine,
 )
 
+# Real Libria Solver Integrations
+from atlas_core.libria_solvers import (
+    LibriaSolverResult,
+    QAPFlowSolver,
+    AllocFlowSolver,
+    WorkFlowSolver,
+    EvoFlowSolver,
+    GraphFlowSolver,
+    DualFlowSolver,
+    MetaFlowSolver,
+    create_libria_solver,
+    get_available_solvers,
+    get_solver_info,
+)
+
 __all__ = [
     # Version info
     "__version__",
@@ -116,6 +131,18 @@ __all__ = [
     "CausalNode",
     "CausalEdge",
     "create_causal_engine",
+    # Real Libria Solvers
+    "LibriaSolverResult",
+    "QAPFlowSolver",
+    "AllocFlowSolver",
+    "WorkFlowSolver",
+    "EvoFlowSolver",
+    "GraphFlowSolver",
+    "DualFlowSolver",
+    "MetaFlowSolver",
+    "create_libria_solver",
+    "get_available_solvers",
+    "get_solver_info",
     # MEZAN orchestrator
     "MezanOrchestrator",
     "OrchestratorConfig",
