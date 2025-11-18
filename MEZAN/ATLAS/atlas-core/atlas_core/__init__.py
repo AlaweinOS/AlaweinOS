@@ -71,6 +71,14 @@ from atlas_core.intelligent_mezan import (
     create_intelligent_mezan,
 )
 
+# Causal Reasoning Engine (opus-level intelligence)
+from atlas_core.causal_engine import (
+    CausalReasoningEngine,
+    CausalNode,
+    CausalEdge,
+    create_causal_engine,
+)
+
 __all__ = [
     # Version info
     "__version__",
@@ -103,6 +111,11 @@ __all__ = [
     "IntelligentMezanEngine",
     "IntelligentSolverPair",
     "create_intelligent_mezan",
+    # Causal Reasoning Engine (opus-level)
+    "CausalReasoningEngine",
+    "CausalNode",
+    "CausalEdge",
+    "create_causal_engine",
     # MEZAN orchestrator
     "MezanOrchestrator",
     "OrchestratorConfig",
