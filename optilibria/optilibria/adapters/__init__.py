@@ -6,6 +6,7 @@ Provides domain-specific adapters for various optimization problem types.
 
 from optilibria.adapters.qap import QAPAdapter
 from optilibria.adapters.tsp import TSPAdapter
+from optilibria.domains.portfolio import PortfolioAdapter
 
 
 def get_adapter(problem_type: str):
@@ -21,6 +22,7 @@ def get_adapter(problem_type: str):
     adapters = {
         "qap": QAPAdapter,
         "tsp": TSPAdapter,
+        "portfolio": PortfolioAdapter,
         # Add more adapters as they are implemented
     }
 
@@ -33,5 +35,6 @@ def get_adapter(problem_type: str):
 __all__ = [
     "QAPAdapter",
     "TSPAdapter",
+    "PortfolioAdapter",
     "get_adapter",
 ]
