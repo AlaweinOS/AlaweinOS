@@ -32,11 +32,19 @@ def optimize(
         problem: Either a domain-specific problem dict or StandardizedProblem
         adapter: Domain adapter (required if problem is dict)
         method: Optimization method name. Options:
+            - 'auto': AI-powered automatic method selection
+            Baseline methods:
             - 'random_search': Baseline random sampling
             - 'simulated_annealing': Simulated annealing metaheuristic
             - 'local_search': Hill climbing with restarts
             - 'genetic_algorithm': Population-based evolutionary algorithm
             - 'tabu_search': Memory-based local search
+            Advanced methods:
+            - 'ant_colony': Ant Colony Optimization (ACO)
+            - 'particle_swarm': Particle Swarm Optimization (PSO)
+            - 'variable_neighborhood': Variable Neighborhood Search (VNS)
+            - 'iterated_local_search': Iterated Local Search (ILS)
+            - 'grasp': Greedy Randomized Adaptive Search Procedure
         config: Method-specific configuration parameters
 
     Returns:
@@ -80,6 +88,36 @@ def optimize(
     else:
         standardized_problem = problem
 
+    # Handle automatic method selection
+    if method == 'auto':
+        try:
+            from optilibria.ai import MethodSelector
+            selector = MethodSelector()
+
+            # Get AI recommendation
+            recommended_method, recommended_config, confidence = selector.recommend_method(
+                problem=problem if isinstance(problem, dict) else None,
+                adapter=adapter,
+                standardized_problem=standardized_problem if not isinstance(problem, dict) else None
+            )
+
+            logger.info(
+                f"AI selector recommended: {recommended_method} "
+                f"(confidence: {confidence:.2%})"
+            )
+
+            # Use recommended method and merge configs
+            method = recommended_method
+            if config is None:
+                config = recommended_config
+            else:
+                # Merge user config with recommended config (user config takes priority)
+                config = {**recommended_config, **config}
+
+        except Exception as e:
+            logger.warning(f"AI selector failed: {e}. Falling back to simulated_annealing")
+            method = 'simulated_annealing'
+
     # Select and run optimization method
     if method == 'random_search':
         from optilibria.methods.baselines.random_search import random_search_optimize
@@ -100,11 +138,28 @@ def optimize(
     elif method == 'tabu_search':
         from optilibria.methods.baselines.tabu_search import tabu_search_optimize
         result = tabu_search_optimize(standardized_problem, config)
+    # Advanced methods
+    elif method == 'ant_colony':
+        from optilibria.methods.advanced.aco import ant_colony_optimize
+        result = ant_colony_optimize(standardized_problem, config)
+    elif method == 'particle_swarm':
+        from optilibria.methods.advanced.pso import particle_swarm_optimize
+        result = particle_swarm_optimize(standardized_problem, config)
+    elif method == 'variable_neighborhood':
+        from optilibria.methods.advanced.vns import variable_neighborhood_search_optimize
+        result = variable_neighborhood_search_optimize(standardized_problem, config)
+    elif method == 'iterated_local_search':
+        from optilibria.methods.advanced.ils import iterated_local_search_optimize
+        result = iterated_local_search_optimize(standardized_problem, config)
+    elif method == 'grasp':
+        from optilibria.methods.advanced.grasp import grasp_optimize
+        result = grasp_optimize(standardized_problem, config)
     else:
         raise NotImplementedError(
             f"Method '{method}' is not implemented. "
-            f"Available methods: random_search, simulated_annealing, "
-            f"local_search, genetic_algorithm, tabu_search"
+            f"Available methods: auto, random_search, simulated_annealing, "
+            f"local_search, genetic_algorithm, tabu_search, ant_colony, "
+            f"particle_swarm, variable_neighborhood, iterated_local_search, grasp"
         )
 
     # Decode solution if adapter provided

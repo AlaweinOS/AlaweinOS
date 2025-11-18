@@ -54,8 +54,14 @@ class QAPAdapter(UniversalOptimizationInterface):
 
     def decode_solution(self, solution: StandardizedSolution) -> np.ndarray:
         """Convert solution to permutation"""
-        P = solution.vector.reshape((self.n, self.n))
-        return np.argmax(P, axis=1)
+        # Check if solution is already a permutation vector
+        if len(solution.vector) == self.n:
+            # Already a permutation vector, return as is
+            return solution.vector.astype(int)
+        else:
+            # Assume it's a flattened permutation matrix
+            P = solution.vector.reshape((self.n, self.n))
+            return np.argmax(P, axis=1)
 
     def validate_solution(self, solution: np.ndarray) -> ValidationResult:
         """Check if solution is valid permutation"""
