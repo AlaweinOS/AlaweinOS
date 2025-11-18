@@ -13,7 +13,7 @@ Key fixes:
 
 import logging
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from scipy import stats
@@ -253,7 +253,7 @@ def convergence_analysis_corrected(
     history: Union[List[float], np.ndarray],
     tolerance: float = 1e-8,  # IMPROVED: Tighter tolerance
     window_size: int = 20     # IMPROVED: Larger window for stability
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """
     Analyze convergence properties - IMPROVED VERSION.
 
