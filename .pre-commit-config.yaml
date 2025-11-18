@@ -1,0 +1,20 @@
+repos:
+- hooks:
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: check-yaml
+  - id: check-json
+  repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.5.0
+- hooks:
+  - args:
+    - --line-length=100
+    id: black
+  repo: https://github.com/psf/black
+  rev: 23.12.1
+- hooks:
+  - args:
+    - --fix
+    id: ruff
+  repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: v0.1.9

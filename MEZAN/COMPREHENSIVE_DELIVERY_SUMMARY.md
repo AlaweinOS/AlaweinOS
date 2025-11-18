@@ -1,0 +1,4 @@
+This document has moved to `docs/COMPREHENSIVE_DELIVERY_SUMMARY.md`.
+
+See: docs/COMPREHENSIVE_DELIVERY_SUMMARY.md
+

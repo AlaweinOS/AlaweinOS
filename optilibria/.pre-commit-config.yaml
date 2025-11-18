@@ -1,0 +1,83 @@
+default_language_version:
+  python: python3
+
+repos:
+  # General code quality hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: detect-private-key
+      - id: check-symlinks
+      - id: destroyed-symlinks
+
+  # Python specific
+  - repo: https://github.com/psf/black
+    rev: 25.9.0
+    hooks:
+      - id: black
+        language_version: python3
+        files: \.py$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+  # Security
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0  # Latest stable version (v2.x not yet in pre-commit)
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: .*\.lock$|package-lock\.json$
+
+  # Markdown
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+        files: \.md$
+        exclude: ^(node_modules|.git)/
+
+  # YAML
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint]
+
+  # Writing Style - No Hype/Generic AI Language
+  - repo: local
+    hooks:
+      - id: writing-style
+        name: Writing Style Check (No Hype)
+        entry: python scripts/check_writing_style.py
+        language: system
+        files: \.(md|rst)$
+        pass_filenames: false
+        args: ['.']
+
+# Configuration for specific hooks
+exclude: |
+  (?x)^(
+    .*/migrations/.*|
+    .*/node_modules/.*|
+    .*/venv/.*|
+    .*/\.git/.*|
+    .*\.min\.js$|
+    .*\.min\.css$
+  )$

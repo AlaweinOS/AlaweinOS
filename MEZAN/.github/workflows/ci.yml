@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check tracked files for forbidden paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Scanning tracked files for venv/caches/large artifacts..."
+          BAD=$(git ls-files | grep -E "/venv/|\\.pytest_cache/|\\.ipynb_checkpoints/|\\.coverage$|coverage\\.xml$|\\.DS_Store$" || true)
+          if [ -n "$BAD" ]; then
+            echo "Forbidden tracked paths detected:"; echo "$BAD"; exit 1; fi
+          echo "OK: no forbidden tracked paths"
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        working-directory: Libria/libria-meta
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest coverage mypy ruff
+      - name: Run tests
+        working-directory: Libria/libria-meta
+        run: |
+          coverage run -m pytest -q || pytest -q
+          coverage xml || true
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: Libria/libria-meta/coverage.xml
+          if-no-files-found: warn
+      - name: Type check (mypy)
+        working-directory: Libria/libria-meta
+        continue-on-error: true
+        run: |
+          mypy . --ignore-missing-imports --install-types --non-interactive
+      - name: Lint (ruff)
+        working-directory: Libria/libria-meta
+        continue-on-error: true
+        run: |
+          ruff --version
+          ruff check .

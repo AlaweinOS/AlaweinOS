@@ -1,0 +1,4 @@
+This document has moved to `docs/LOCAL_AI_ORCHESTRATION_SUPERPROMPT.md`.
+
+See: docs/LOCAL_AI_ORCHESTRATION_SUPERPROMPT.md
+

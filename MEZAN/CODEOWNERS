@@ -1,0 +1,48 @@
+# CODEOWNERS for MEZAN
+# This file defines code ownership for the MEZAN monorepo
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* Meshal Alawein @AlaweinOS
+
+# ATLAS Framework
+/ATLAS/ Meshal Alawein @AlaweinOS
+/ATLAS/atlas-core/ Meshal Alawein
+/ATLAS/src/ Meshal Alawein
+/ATLAS/tests/ Meshal Alawein
+
+# Libria Research
+/Libria/ Meshal Alawein @AlaweinOS
+/Libria/libria-meta/ Meshal Alawein
+/Libria/libria-alloc/ Meshal Alawein
+/Libria/libria-dual/ Meshal Alawein
+/Libria/libria-evo/ Meshal Alawein
+/Libria/libria-flow/ Meshal Alawein
+/Libria/libria-graph/ Meshal Alawein
+/Libria/libria-qap/ Meshal Alawein
+
+# MEZAN Core
+/MEZAN/ Meshal Alawein @AlaweinOS
+
+# Documentation
+/docs/ Meshal Alawein @AlaweinOS
+*.md Meshal Alawein
+
+# Scripts
+/scripts/ Meshal Alawein
+
+# Configuration files
+/.editorconfig Meshal Alawein
+/.gitignore Meshal Alawein
+/.gitattributes Meshal Alawein
+/.pre-commit-config.yaml Meshal Alawein
+/docker-compose*.yml Meshal Alawein
+/Makefile Meshal Alawein
+/mypy.ini Meshal Alawein
+/ruff.toml Meshal Alawein
+
+# Security and governance
+/SECURITY.md Meshal Alawein
+/CODE_OF_CONDUCT.md Meshal Alawein
+/CONTRIBUTING.md Meshal Alawein
+/LICENSE Meshal Alawein

@@ -1,0 +1,14 @@
+# Global ignore rules for repo
+**/.pytest_cache/
+**/__pycache__/
+**/.ipynb_checkpoints/
+**/venv/
+**/.DS_Store
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage
+**/coverage.xml
+**/.env
+**/*.pyc
+Libria/libria-meta/results/
+!Libria/libria-meta/results/.keep
