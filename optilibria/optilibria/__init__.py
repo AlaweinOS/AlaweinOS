@@ -1,0 +1,24 @@
+"""
+Optilibria: Universal Optimization Framework
+
+A production-grade optimization library with 31+ algorithms,
+GPU acceleration, and enterprise-scale performance.
+"""
+
+__version__ = "1.0.0"
+__author__ = "Meshal Alawein"
+__email__ = "meshal@berkeley.edu"
+
+from optilibria.core.interfaces import (
+    StandardizedProblem,
+    StandardizedSolution,
+    UniversalOptimizationInterface,
+    ValidationResult,
+)
+
+__all__ = [
+    "StandardizedProblem",
+    "StandardizedSolution",
+    "UniversalOptimizationInterface",
+    "ValidationResult",
+]
