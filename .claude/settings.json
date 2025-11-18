@@ -1,0 +1,25 @@
+{
+  "customInstructions": "instructions.md",
+  "model": "sonnet",
+  "parallelization": {
+    "enabled": true,
+    "maxConcurrent": 1500
+  },
+  "output": {
+    "maxTokens": 200,
+    "style": "concise",
+    "format": "structured"
+  },
+  "execution": {
+    "mode": "ultrathink-parallel",
+    "speedFirst": true,
+    "autoCorrect": true
+  },
+  "agentTeams": {
+    "codeAnalysis": true,
+    "automation": true,
+    "infrastructure": true,
+    "governance": true,
+    "learning": true
+  }
+}
