@@ -112,6 +112,9 @@ class TSPAdapter(UniversalOptimizationInterface):
         """
         Compute distance matrix from coordinates with enhanced validation
 
+        PERFORMANCE OPTIMIZED: Vectorized computation using NumPy broadcasting
+        instead of nested loops. Provides ~10-100x speedup for large instances.
+
         FIXES:
         - Validates distance matrix symmetry
         - Checks for negative distances
@@ -127,21 +130,21 @@ class TSPAdapter(UniversalOptimizationInterface):
             ValueError: If negative distances are found
         """
         n = len(coordinates)
-        distances = np.zeros((n, n))
 
-        for i in range(n):
-            for j in range(n):
-                if i != j:
-                    dx = coordinates[i, 0] - coordinates[j, 0]
-                    dy = coordinates[i, 1] - coordinates[j, 1]
-                    distances[i, j] = np.sqrt(dx**2 + dy**2)
+        # OPTIMIZATION: Vectorized distance computation using broadcasting
+        # This is much faster than nested loops for large n
+        # Shape: (n, 1, 2) - (1, n, 2) = (n, n, 2)
+        diff = coordinates[:, np.newaxis, :] - coordinates[np.newaxis, :, :]
 
-                    # VALIDATION: Check for negative distances (should never happen)
-                    if distances[i, j] < 0:
-                        raise ValueError(
-                            f"Negative distance found between cities {i} and {j}: "
-                            f"{distances[i, j]}"
-                        )
+        # Compute Euclidean distances: sqrt(dx^2 + dy^2)
+        distances = np.sqrt(np.sum(diff**2, axis=2))
+
+        # VALIDATION: Check for negative distances (should never happen with Euclidean)
+        if np.any(distances < 0):
+            raise ValueError(
+                "Negative distance found in distance matrix. "
+                "This should not occur with Euclidean distances."
+            )
 
         # VALIDATION: Check symmetry for Euclidean distances
         if not np.allclose(distances, distances.T, rtol=1e-10, atol=1e-12):
