@@ -10,15 +10,22 @@ Provides:
 - 40+ ATLAS research agents
 - Dialectical workflows
 - Integration with Libria optimization solvers
+- Production REST API server (FastAPI)
+- Parallel execution system (multiprocessing)
+- Performance monitoring & telemetry (Prometheus-compatible)
+- ML-based solver recommendation
+- Real-time dashboard
 
-Version 3.0: Optimized for depth over breadth
-- Reduced parallel agents from 5 to 3
-- Added deep sequential synthesizer
-- Maximum intelligence per token
-- Focused, high-value analysis
+Version 3.5.0: Production-Grade Enterprise Features
+- REST API for remote optimization
+- True parallel execution with process pools
+- Comprehensive telemetry and monitoring
+- ML-based intelligent solver selection
+- Real-time metrics dashboard
+- Enterprise observability
 """
 
-__version__ = "3.0.0"  # Updated for Intelligent MEZAN
+__version__ = "3.5.0"  # Updated for Production Features
 __author__ = "MEZAN Research Team"
 
 # ATLAS core components
@@ -94,6 +101,33 @@ from atlas_core.libria_solvers import (
     get_solver_info,
 )
 
+# Production Features (V3.5+)
+try:
+    from atlas_core.parallel_executor import ParallelExecutor, TaskPriority
+    from atlas_core.telemetry import (
+        MetricsCollector,
+        Counter,
+        Gauge,
+        Histogram,
+        ResourceMonitor,
+        AlertManager,
+        AlertRule,
+    )
+    from atlas_core.ml_recommender import (
+        SolverRecommender,
+        FeatureExtractor,
+        ProblemFeatures,
+    )
+    from atlas_core.ml_integration import (
+        ATLASMLRecommender,
+        AdaptiveSolverSelector,
+    )
+    PRODUCTION_FEATURES_AVAILABLE = True
+except ImportError as e:
+    PRODUCTION_FEATURES_AVAILABLE = False
+    import warnings
+    warnings.warn(f"Production features not available: {e}")
+
 __all__ = [
     # Version info
     "__version__",
@@ -150,3 +184,27 @@ __all__ = [
     "OrchestrationResult",
     "create_default_orchestrator",
 ]
+
+# Conditionally add production features to exports
+if PRODUCTION_FEATURES_AVAILABLE:
+    __all__.extend([
+        # Parallel execution
+        "ParallelExecutor",
+        "TaskPriority",
+        # Telemetry
+        "MetricsCollector",
+        "Counter",
+        "Gauge",
+        "Histogram",
+        "ResourceMonitor",
+        "AlertManager",
+        "AlertRule",
+        # ML Recommendation
+        "SolverRecommender",
+        "FeatureExtractor",
+        "ProblemFeatures",
+        "ATLASMLRecommender",
+        "AdaptiveSolverSelector",
+        # Feature flag
+        "PRODUCTION_FEATURES_AVAILABLE",
+    ])
