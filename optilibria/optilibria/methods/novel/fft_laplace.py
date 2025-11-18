@@ -10,7 +10,6 @@ import logging
 import warnings
 from typing import Any, Dict, Optional
 
-import numpy as np
 
 logger = logging.getLogger(__name__)
 

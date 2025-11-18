@@ -13,12 +13,10 @@ Key fixes:
 
 import logging
 import warnings
-from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from scipy import stats
-from scipy.stats import mannwhitneyu, ttest_ind, ttest_rel, wilcoxon
 
 logger = logging.getLogger(__name__)
 

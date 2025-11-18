@@ -15,8 +15,10 @@ from optilibria.core.interfaces import (
     UniversalOptimizationInterface,
     ValidationResult,
 )
+from optilibria.optimize import optimize
 
 __all__ = [
+    "optimize",
     "StandardizedProblem",
     "StandardizedSolution",
     "UniversalOptimizationInterface",
