@@ -1,483 +1,277 @@
-# AlaweinOS - Repository Structure Guide
+# AlaweinOS Repository Structure
 
-**Last Updated:** 2025-11-19
-**Version:** 4.0.0
-
-This document provides a comprehensive navigation guide for the AlaweinOS monorepo structure.
+**Navigation guide for the AlaweinOS monorepo**
 
 ---
 
-## 📁 Root Directory
+## Directory Layout
 
 ```
 AlaweinOS/
-├── .archive/           # Archived legacy documentation
-├── .github/            # GitHub configuration and workflows
-├── .meta/              # Meta documentation and notes
-├── MEZAN/              # Meta-Equilibrium Zero-regret Assignment Network
-├── TalAI/              # Autonomous Testing & Laboratory Analysis Intelligence
-├── optilibria/         # Universal Optimization Framework
-├── SimCore/            # High-Performance Simulation Core Engine
-├── qmlab/              # Quantum Machine Learning Laboratory
-├── docs/               # Shared documentation
-├── scripts/            # Shared utility scripts
-├── tests/              # Integration tests
-├── reports/            # Analysis and compliance reports
-├── .gitignore          # Git ignore patterns (consolidated)
-├── CODEOWNERS          # Code ownership rules
-├── CLAUDE.md           # AI assistant comprehensive guide
-├── CODE_OF_CONDUCT.md  # Community guidelines
-├── CONTRIBUTING.md     # Contribution guidelines
-├── LICENSE             # Apache 2.0 license
-├── Makefile            # Root-level commands
-├── PROJECT.md          # Project overview and roadmap
-├── README.md           # Main repository documentation
-├── SECURITY.md         # Security policy
-├── STRUCTURE.md        # This file
-└── pyproject.toml      # Workspace-level Python configuration
-```
-
----
-
-## 🗄️ Archive Directory (`.archive/`)
-
-**Purpose:** Historical documentation preserved for reference but no longer actively maintained.
-
-```
-.archive/
-├── README.md           # Archive documentation
-├── sessions/           # Historical session reports
-│   ├── AUTONOMOUS_SESSION_SUMMARY.md
-│   ├── FINAL_SESSION_REPORT.md
-│   ├── SESSION_2_COMPLETION_REPORT.md
-│   ├── SESSION_3_COMPLETION_REPORT.md
-│   ├── SESSION_4_REFACTORING_REPORT.md
-│   └── SESSION_SUMMARY.md
-├── development/        # Early-stage brainstorming and planning
-│   ├── IDEA_ARCHIVE_ANALYSIS.md
-│   └── Important-1.md  # Original MEZAN brainstorming (1,363 lines)
-└── prompts/            # Outdated AI assistant superprompts
-    ├── MEZAN_SUPERPROMPT.md
-    ├── OPTILIBRIA_SUPERPROMPT.md
-    └── SIMCORE_SUPERPROMPT.md
-```
-
-**Archived:** 2025-11-19 during repository cleanup
-
----
-
-## ⚙️ GitHub Configuration (`.github/`)
-
-**Purpose:** GitHub-specific configuration, workflows, and templates.
-
-```
-.github/
-├── workflows/          # GitHub Actions CI/CD pipelines
-│   ├── accessibility.yml       # QMLab accessibility testing
-│   ├── ci.yml                  # Main CI pipeline
-│   ├── code-quality.yml        # Code quality checks
-│   ├── codeql.yml              # Security analysis
-│   ├── compliance_check.yml    # Compliance validation
-│   ├── optibench-nightly.yml   # Nightly benchmarking
-│   └── repo-hygiene.yml        # Repository maintenance
-├── ISSUE_TEMPLATE/     # Issue templates
-├── PULL_REQUEST_TEMPLATE.md
-└── dependabot.yml      # Dependency updates configuration
-```
-
----
-
-## 📝 Meta Documentation (`.meta/`)
-
-**Purpose:** Internal documentation and development notes.
-
-```
-.meta/
-├── DEPENDENCY_STANDARDIZATION_NOTES.md  # Dependency management guide
-└── [other meta documentation as needed]
-```
-
----
-
-## 🤖 MEZAN - Meta-Equilibrium Zero-regret Assignment Network
-
-**Location:** `/MEZAN/`
-**Status:** V4.0.0 - Production Ready (58,076 lines)
-
-```
-MEZAN/
-├── ATLAS/              # AI Research Orchestration System
-│   ├── .github/        # ATLAS-specific workflows
-│   ├── atlas-core/     # Core orchestration engine
-│   │   ├── docs/       # Comprehensive documentation (100+ files)
-│   │   ├── src/        # Source code
-│   │   │   └── atlas/  # Main package
-│   │   │       ├── agents/         # 8+ specialized research agents
-│   │   │       ├── blackboard/     # Redis-backed shared state
-│   │   │       ├── core/           # Core orchestration logic
-│   │   │       ├── utils/          # Utilities
-│   │   │       └── atlas_api_server.py  # Flask API server
-│   │   ├── tests/      # Test suite
-│   │   ├── examples/   # Usage examples
-│   │   ├── docker/     # Docker configuration
-│   │   ├── k8s/        # Kubernetes manifests
-│   │   ├── helm/       # Helm charts (planned)
-│   │   ├── terraform/  # Terraform configuration (planned)
-│   │   ├── Makefile    # Build commands
-│   │   ├── requirements.txt
-│   │   ├── requirements-dev.txt
-│   │   └── requirements-validation.txt
-│   ├── pyproject.toml
-│   ├── requirements.txt
-│   ├── START_HERE.md   # ATLAS entry point
-│   └── QUICK_START.md
-├── Libria/             # Novel Optimization Solvers Suite
-│   ├── libria-qap/     # GPU-accelerated QAP solver
-│   │   ├── src/
-│   │   ├── tests/
-│   │   ├── docs/
-│   │   └── requirements.txt
-│   ├── libria-flow/    # Confidence-aware workflow routing
-│   ├── libria-alloc/   # Constrained Thompson Sampling
-│   ├── libria-graph/   # Network topology optimization
-│   ├── libria-dual/    # Adversarial min-max optimization
-│   ├── libria-evo/     # Evolutionary algorithms
-│   ├── libria-meta/    # Solver-of-solvers
-│   ├── EXECUTIVE_SUMMARY.md
-│   └── docs/
-├── docs/               # MEZAN-wide documentation
-│   └── LOCAL_AI_ORCHESTRATION_SUPERPROMPT.md
-├── MEZAN_COMPLETE_DUAL_DOCUMENTATION.md  # Vision vs. V4.0.0 reality
-└── [other configuration files]
-```
-
-**Key Entry Points:**
-- `MEZAN/ATLAS/START_HERE.md` - Start here for ATLAS
-- `MEZAN/MEZAN_COMPLETE_DUAL_DOCUMENTATION.md` - Comprehensive MEZAN documentation
-- `MEZAN/Libria/EXECUTIVE_SUMMARY.md` - Libria suite overview
-
----
-
-## 🧪 TalAI - Autonomous Testing & Laboratory Analysis Intelligence
-
-**Location:** `/TalAI/`
-**Status:** Active Development (28+ modules)
-
-```
-TalAI/
-├── alaweinos/          # Shared standards and common code
-│   ├── src/
-│   └── pyproject.toml
-├── abstract-writer/    # Abstract generation
-│   ├── src/
-│   ├── tests/
-│   ├── README.md
-│   └── pyproject.toml
-├── adversarial-review/ # Adversarial critique generation
-├── atlas-autonomous-research/  # ATLAS integration
-├── atlas-orchestrator/ # Multi-agent orchestration
-├── chaos-engine/       # Chaos engineering for research
-├── citation-predictor/ # Citation prediction
-├── data-cleaner/       # Data cleaning automation
-├── experiment-designer/  # Experimental design
-├── failure-db/         # Failure database
-├── ghost-researcher/   # Autonomous research execution
-├── grant-writer/       # Grant proposal generation
-├── hypothesis-match/   # Hypothesis matching
-├── idea-calculus/      # Research idea analysis
-├── lit-review-bot/     # Literature review automation
-├── paper-miner/        # Paper mining and analysis
-├── PEDs-Playbook/      # Practical experimental design
-├── prompt-marketplace/ # Prompt sharing
-├── promptforge/        # Prompt engineering tools
-├── promptforge-lite/   # Lightweight prompt tools
-├── research-pricer/    # Research cost estimation
-├── turing-features/    # Advanced AI features
-│   ├── meta-learning/
-│   ├── self-refutation/
-│   ├── hall-of-failures/
-│   └── interrogation/
-├── turingo/            # Turing test framework
-├── validation-framework/  # Validation tools
-└── MASTER_INDEX.md     # Module index
-```
-
-**Architecture Pattern:** Each module is independently installable with:
-- `src/{module}/` - Source code
-- `tests/` - Test suite
-- `README.md` - Module documentation
-- `pyproject.toml` - Package configuration
-
----
-
-## 🔧 Optilibria - Universal Optimization Framework
-
-**Location:** `/optilibria/`
-**Status:** V1.0.0 Beta (138 tests, 95% coverage)
-
-```
-optilibria/
-├── .github/            # CI/CD workflows
+├── .archive/                 # Historical documentation (38+ files)
+│   ├── session-reports/
+│   ├── cycle-reports/
+│   ├── sprint-reports/
+│   ├── handoffs/
+│   ├── completion-reports/
+│   └── README.md
+├── .claude/                  # Claude Code configuration
+│   └── instructions.md
+├── .github/                  # GitHub workflows and templates
 │   ├── workflows/
-│   │   ├── ci.yml
-│   │   ├── codeql.yml
-│   │   ├── compliance_check.yml
-│   │   └── llm-eval-caller.yml
-│   ├── ISSUE_TEMPLATE/
 │   ├── PULL_REQUEST_TEMPLATE.md
-│   └── dependabot.yml
-├── optilibria/         # Main package
-│   ├── __init__.py
-│   ├── core/           # Core optimization logic
-│   │   ├── optimizer.py
-│   │   ├── domain_adapter.py
-│   │   └── ...
-│   ├── algorithms/     # Optimization algorithms
-│   │   ├── random_search.py
-│   │   ├── simulated_annealing.py
-│   │   ├── local_search.py
-│   │   ├── genetic_algorithm.py
-│   │   └── tabu_search.py
-│   ├── domains/        # Domain adapters
-│   │   ├── qap/        # Quadratic Assignment Problem
-│   │   └── tsp/        # Traveling Salesman Problem
-│   ├── benchmarks/     # Benchmark instances
-│   │   └── qaplib/     # 138 QAPLIB instances
-│   ├── utils/          # Utilities
-│   └── visualization/  # Plotting tools
-├── tests/              # Test suite (138 tests)
-│   ├── test_core/
-│   ├── test_algorithms/
-│   ├── test_domains/
-│   └── test_benchmarks/
-├── examples/           # Usage examples
-├── docs/               # Documentation
-├── scripts/            # Utility scripts
-├── pyproject.toml      # Package configuration
-├── README.md           # Main documentation
-├── CLAUDE.md           # AI assistant guide
-└── Makefile
-```
-
-**Key Features:**
-- 5 optimization methods
-- 138 QAPLIB benchmarks
-- AI method selector
-- Universal domain adapter architecture
-- 95% test coverage
-
----
-
-## 🎮 SimCore - High-Performance Simulation Core Engine
-
-**Location:** `/SimCore/`
-**Status:** Early Stage / Foundational Framework
-
-```
-SimCore/
-├── .github/            # GitHub workflows
-├── simcore/            # Main package (planned)
-│   └── [to be developed]
-├── tests/
-├── README.md
-└── [configuration files]
-```
-
-**Status:** Foundational framework in development.
-
----
-
-## ⚛️ QMLab - Quantum Machine Learning Laboratory
-
-**Location:** `/qmlab/`
-**Status:** Production (https://qmlab.online/)
-
-```
-qmlab/
-├── .github/            # GitHub workflows
-│   └── workflows/
-│       ├── ci.yml
-│       └── accessibility.yml
-├── src/                # React TypeScript source
-│   ├── components/     # UI components
-│   │   ├── circuit/    # Quantum circuit builder
-│   │   ├── bloch/      # Bloch sphere visualization
-│   │   ├── training/   # Training dashboard
-│   │   └── ui/         # Shared UI components
-│   ├── lib/            # Utilities and hooks
-│   ├── App.tsx         # Main app component
-│   └── main.tsx        # Entry point
-├── public/             # Static assets
-├── tests/              # Playwright E2E tests
-│   ├── test/           # Standard tests
-│   ├── accessibility/  # A11y tests
-│   └── mobile/         # Mobile tests
-├── docs/               # Documentation
-├── package.json        # Node.js dependencies
-├── vite.config.ts      # Vite build configuration
-├── tsconfig.json       # TypeScript configuration
-├── tailwind.config.js  # Tailwind CSS configuration
-├── README.md
-└── CLAUDE.md
-```
-
-**Tech Stack:** React 18, TypeScript, Vite, shadcn/ui, Three.js, Tailwind CSS
-
----
-
-## 📚 Shared Directories
-
-### `/docs/` - Shared Documentation
-
-```
-docs/
-└── [cross-system documentation]
-```
-
-### `/scripts/` - Shared Utility Scripts
-
-```
-scripts/
-└── [shared automation scripts]
-```
-
-### `/tests/` - Integration Tests
-
-```
-tests/
-└── [cross-system integration tests]
-```
-
-### `/reports/` - Analysis and Compliance Reports
-
-```
-reports/
-├── .github/            # Report generation workflows
-└── [generated reports]
+│   └── header.svg, divider.svg
+├── docs/                     # Shared monorepo documentation
+│   └── README.md
+├── reports/                  # Compliance and analysis reports
+│   ├── README.md
+│   ├── CODE_OF_CONDUCT.md
+│   └── SECURITY.md
+├── scripts/                  # Shared utility scripts
+│   └── README.md
+├── MEZAN/                    # Enterprise Automation Platform
+│   ├── ATLAS/                # Multi-agent AI orchestration
+│   ├── Libria/               # Novel optimization algorithms
+│   ├── docs/
+│   ├── START_HERE.md
+│   └── README.md
+├── TalAI/                    # AI Research Platform (28+ modules)
+│   ├── abstract-writer/
+│   ├── grant-writer/
+│   ├── lit-review-bot/
+│   ├── {25+ more modules}/
+│   ├── MASTER_INDEX.md
+│   └── README.md
+├── optilibria/               # Universal Optimization Framework
+│   ├── optilibria/           # Core library
+│   ├── benchmarks/
+│   ├── examples/
+│   ├── docs/
+│   ├── CLAUDE.md
+│   └── README.md
+├── SimCore/                  # Interactive Scientific Computing
+│   ├── src/                  # React/TypeScript source
+│   ├── public/
+│   ├── docs/
+│   ├── scripts/
+│   ├── SIMCORE_CLAUDE_CODE_DOCUMENTATION.md
+│   └── README.md
+├── qmlab/                    # Quantum ML Laboratory
+│   ├── src/                  # React/TypeScript source
+│   ├── public/
+│   ├── docs/
+│   ├── CLAUDE.md
+│   └── README.md
+├── README.md                 # Organization overview
+├── PROJECT.md                # Comprehensive project documentation
+├── STRUCTURE.md              # This file
+├── CLAUDE.md                 # AI assistant comprehensive guide
+├── CONTRIBUTING.md           # Contribution guidelines
+├── CODE_OF_CONDUCT.md
+├── SECURITY.md
+├── CODEOWNERS
+└── LICENSE
 ```
 
 ---
 
-## 🔍 Navigation Tips
+## How to Navigate
 
-### Finding Files
+### 🎯 I want to...
 
-**By System:**
-```bash
-# MEZAN/ATLAS files
-find MEZAN/ATLAS -name "*.py"
+#### **Learn about the organization**
+→ Start with `README.md`
+→ Read `PROJECT.md` for comprehensive overview
+→ Check `CLAUDE.md` for detailed system descriptions
 
-# TalAI modules
-ls TalAI/
+#### **Work with a specific system**
 
-# Optilibria tests
-ls optilibria/tests/
-```
+**MEZAN (Enterprise Automation):**
+→ `MEZAN/START_HERE.md` - Entry point
+→ `MEZAN/ATLAS/START_HERE.md` - ATLAS subsystem
+→ `MEZAN/Libria/EXECUTIVE_SUMMARY.md` - Optimization algorithms
 
-**By File Type:**
-```bash
-# All Python files
-find . -name "*.py" ! -path "./.git/*" ! -path "./.venv/*"
+**TalAI (Research Platform):**
+→ `TalAI/README.md` - Overview
+→ `TalAI/MASTER_INDEX.md` - Module index
+→ `TalAI/{module}/README.md` - Specific module docs
 
-# All TypeScript files
-find . -name "*.ts" -o -name "*.tsx"
+**Optilibria (Optimization):**
+→ `optilibria/README.md` - Complete guide
+→ `optilibria/CLAUDE.md` - AI assistant guide
+→ `optilibria/examples/` - Usage examples
 
-# All configuration files
-find . -name "pyproject.toml" -o -name "package.json"
-```
+**SimCore (Scientific Computing):**
+→ `SimCore/README.md` - Platform overview
+→ `SimCore/SIMCORE_CLAUDE_CODE_DOCUMENTATION.md` - Full documentation
+→ `SimCore/docs/DEVELOPMENT.md` - Development guide
 
-**By Content:**
-```bash
-# Search for specific code
-grep -r "optimization" --include="*.py"
+**qmlab (Quantum ML):**
+→ `qmlab/README.md` - Platform overview
+→ `qmlab/CLAUDE.md` - AI assistant guide
+→ `qmlab/docs/` - Detailed documentation
 
-# Search for TODOs
-grep -r "TODO" --include="*.py" --include="*.ts"
-```
+#### **Understand system architecture**
+→ `PROJECT.md` - System interdependencies
+→ `{system}/docs/` - System-specific architecture
+→ `CLAUDE.md` - Detailed technical descriptions
 
-### Understanding Dependencies
+#### **Contribute to the project**
+→ `CONTRIBUTING.md` - Contribution guidelines
+→ `CODE_OF_CONDUCT.md` - Community guidelines
+→ `{system}/CONTRIBUTING.md` - System-specific guidelines (if exists)
 
-```bash
-# Python dependencies
-find . -name "pyproject.toml" -o -name "requirements*.txt"
+#### **Find historical information**
+→ `.archive/README.md` - Archive index
+→ `.archive/{category}/` - Specific historical docs
 
-# Node.js dependencies
-find . -name "package.json"
-```
-
-### Running Tests
-
-```bash
-# Root level
-make test
-
-# MEZAN/ATLAS
-cd MEZAN/ATLAS && make test
-
-# Optilibria
-cd optilibria && pytest
-
-# QMLab
-cd qmlab && npm run test
-```
+#### **Set up development environment**
+→ `PROJECT.md` - Quick start per system
+→ `{system}/README.md` - System setup
+→ `{system}/docs/DEVELOPMENT.md` - Development details
 
 ---
 
-## 📊 Repository Statistics
+## System Entry Points
 
-**Updated:** 2025-11-19 (post-cleanup)
-
-- **Total Files:** ~1,000+ across all systems
-- **Total Lines:** 100,000+ lines of code
-- **Systems:** 5 major
-- **Modules:** 28+ in TalAI
-- **Tests:** 138+ in Optilibria, comprehensive across systems
-- **Documentation:** 100+ markdown files
-- **Languages:** Python (primary), TypeScript/JavaScript (QMLab)
-- **Configuration Files:**
-  - 1 root .gitignore (consolidated from 29)
-  - 1 root CODEOWNERS (consolidated from 11)
-  - 27+ pyproject.toml files
-  - 1 root pyproject.toml (workspace)
+| System | Primary Entry | Documentation | Type |
+|--------|--------------|---------------|------|
+| MEZAN | `MEZAN/START_HERE.md` | `MEZAN/README.md` | Python |
+| TalAI | `TalAI/MASTER_INDEX.md` | `TalAI/README.md` | Python |
+| Optilibria | `optilibria/README.md` | `optilibria/CLAUDE.md` | Python |
+| SimCore | `SimCore/README.md` | `SimCore/SIMCORE_CLAUDE_CODE_DOCUMENTATION.md` | TypeScript |
+| qmlab | `qmlab/README.md` | `qmlab/CLAUDE.md` | TypeScript |
 
 ---
 
-## 🗺️ Navigation Flowchart
+## File Naming Conventions
 
-```
-START HERE
-    ↓
-Read ROOT/README.md (overview)
-    ↓
-Identify your interest:
-    ├── AI Orchestration? → MEZAN/ATLAS/START_HERE.md
-    ├── Research Automation? → TalAI/MASTER_INDEX.md
-    ├── Optimization? → optilibria/README.md
-    ├── Quantum ML? → qmlab/README.md
-    └── Simulation? → SimCore/README.md
-    ↓
-Read system-specific CLAUDE.md for AI assistance
-    ↓
-Check pyproject.toml for dependencies
-    ↓
-Run system setup and tests
-    ↓
-Read system docs/ directory for deep dive
-```
+### Documentation Files
+- `README.md` - Overview and quick start (UPPERCASE)
+- `CLAUDE.md` - AI assistant guidance (UPPERCASE)
+- `START_HERE.md` - Entry point (UPPERCASE)
+- `{topic}.md` - Specific documentation (lowercase with hyphens)
+
+### Code Files
+- **Python**: `lowercase_with_underscores.py`
+- **TypeScript**: `camelCase.ts` or `PascalCase.tsx` (components)
+- **Configuration**: `.config-name` or `config-name.{ext}`
+
+### Branches
+- Feature branches: `claude/feature-name-sessionid`
+- All work branches must start with `claude/`
 
 ---
 
-## 📞 Questions?
+## Directory Purposes
 
-- **General Questions:** See `README.md` and `CLAUDE.md`
-- **Contributing:** See `CONTRIBUTING.md`
-- **Security:** See `SECURITY.md`
-- **Code Ownership:** See `CODEOWNERS`
-- **Project Vision:** See `PROJECT.md`
+### Root Directories
 
-**Contact:** Meshal Alawein (meshal@berkeley.edu)
+**`.archive/`**
+Historical documentation preserved for reference. Organized by category (sessions, cycles, sprints, handoffs, completion reports).
+
+**`.claude/`**
+Claude Code AI assistant configuration and instructions.
+
+**`.github/`**
+GitHub Actions workflows, PR templates, and repository assets.
+
+**`docs/`**
+Shared monorepo documentation that applies across systems.
+
+**`reports/`**
+Compliance reports, analysis outputs, and quality metrics.
+
+**`scripts/`**
+Shared utility scripts for development, testing, and deployment.
+
+### System Directories
+
+Each major system (`MEZAN/`, `TalAI/`, `optilibria/`, `SimCore/`, `qmlab/`) is independently structured with:
+- `src/` or package directory - Source code
+- `tests/` - Test suites
+- `docs/` - System documentation
+- `examples/` - Usage examples (where applicable)
+- `README.md` - System overview
+- Configuration files (package.json, pyproject.toml, etc.)
 
 ---
 
-*Last Updated: 2025-11-19*
-*This structure reflects the state after repository cleanup and organization.*
+## Adding New Content
+
+### New System
+1. Create top-level directory: `{SystemName}/`
+2. Add `README.md` with overview
+3. Add `CLAUDE.md` or equivalent for AI guidance
+4. Update `PROJECT.md` with system description
+5. Update this `STRUCTURE.md` with navigation
+6. Update root `README.md` if featured
+
+### New Module (within system)
+1. Create module directory within system
+2. Add module `README.md`
+3. Update system's index/master documentation
+4. Add to system's README if significant
+
+### New Documentation
+1. Determine scope (monorepo vs. system-specific)
+2. Place in appropriate `docs/` directory
+3. Update relevant navigation files
+4. Link from related documents
+
+### Historical Reports
+1. Place in `.archive/{category}/`
+2. Update `.archive/README.md` if significant
+3. Remove from active documentation
+
+---
+
+## Quick Reference: Common Paths
+
+**Main Documentation:**
+- `/README.md` - Organization overview
+- `/PROJECT.md` - Comprehensive project docs
+- `/CLAUDE.md` - AI assistant guide (20KB)
+- `/CONTRIBUTING.md` - How to contribute
+
+**System READMEs:**
+- `/MEZAN/README.md`
+- `/TalAI/README.md`
+- `/optilibria/README.md`
+- `/SimCore/README.md`
+- `/qmlab/README.md`
+
+**Entry Points:**
+- `/MEZAN/START_HERE.md`
+- `/TalAI/MASTER_INDEX.md`
+- `/optilibria/README.md`
+- `/SimCore/SIMCORE_CLAUDE_CODE_DOCUMENTATION.md`
+- `/qmlab/CLAUDE.md`
+
+**Historical:**
+- `/.archive/README.md`
+
+---
+
+## Navigation Tips
+
+1. **Start with README.md** for overview
+2. **Read PROJECT.md** for comprehensive understanding
+3. **Check STRUCTURE.md** (this file) for navigation
+4. **Use system entry points** for deep dives
+5. **Review CLAUDE.md** for AI assistant guidance
+6. **Explore .archive/** for historical context
+
+---
+
+## Questions?
+
+- **General questions:** See PROJECT.md or contact meshal@berkeley.edu
+- **System-specific:** Check system's README.md or CLAUDE.md
+- **Contributing:** See CONTRIBUTING.md
+- **Historical:** Check .archive/README.md
+
+---
+
+**Last Updated:** 2025-11-19
+**Maintainer:** Dr. Meshal Alawein (meshal@berkeley.edu)
