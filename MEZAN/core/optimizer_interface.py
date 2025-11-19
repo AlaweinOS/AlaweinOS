@@ -111,7 +111,7 @@ class OptimizationResult:
 
     def is_valid(self) -> bool:
         """Check if result is valid and usable"""
-        return self.status == SolverStatus.SUCCESS and self.solution is not None
+        return self.status in (SolverStatus.SUCCESS, SolverStatus.FALLBACK) and self.solution is not None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -258,16 +258,36 @@ class HeuristicFallbackOptimizer(OptimizerInterface):
 
         start_time = time.time()
 
+        # Validate problem before attempting to solve
+        is_valid, error = problem.validate()
+        if not is_valid:
+            return OptimizationResult(
+                status=SolverStatus.FAILED,
+                solution=None,
+                objective_value=None,
+                metadata={"solver": "HeuristicFallback", "error": error},
+                computation_time=time.time() - start_time,
+            )
+
         # Problem-type-specific heuristics
-        if problem.problem_type == ProblemType.QAP:
-            solution = self._solve_qap_heuristic(problem)
-        elif problem.problem_type == ProblemType.FLOW:
-            solution = self._solve_flow_heuristic(problem)
-        elif problem.problem_type == ProblemType.ALLOC:
-            solution = self._solve_alloc_heuristic(problem)
-        else:
-            # Default: random solution
-            solution = {"type": "random", "value": None}
+        try:
+            if problem.problem_type == ProblemType.QAP:
+                solution = self._solve_qap_heuristic(problem)
+            elif problem.problem_type == ProblemType.FLOW:
+                solution = self._solve_flow_heuristic(problem)
+            elif problem.problem_type == ProblemType.ALLOC:
+                solution = self._solve_alloc_heuristic(problem)
+            else:
+                # Default: random solution
+                solution = {"type": "random", "value": None}
+        except Exception as e:
+            return OptimizationResult(
+                status=SolverStatus.FAILED,
+                solution=None,
+                objective_value=None,
+                metadata={"solver": "HeuristicFallback", "error": str(e)},
+                computation_time=time.time() - start_time,
+            )
 
         computation_time = time.time() - start_time
 
