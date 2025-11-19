@@ -1,4 +1,10 @@
-# Python
+# AlaweinOS Monorepo - Comprehensive .gitignore
+# Consolidated from all subsystem .gitignore files
+# Last updated: 2025-11-19
+
+# ================================
+# PYTHON
+# ================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -16,51 +22,246 @@ parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Node.js
+# Virtual environments
+venv/
+venv.bak/
+env/
+env.bak/
+ENV/
+.venv/
+
+# Python testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.pytype/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.cache
+
+# Python type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pybuilder/
+
+# Python project files
+.ropeproject
+.scrapy
+.webassets-cache
+celerybeat-schedule
+celerybeat.pid
+*.sage.py
+ipython_config.py
+
+# Python IDEs
+.spyderproject
+.spyproject
+.python-version
+poetry.lock
+Pipfile.lock
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+profile_default/
+
+# ================================
+# NODE.JS / JAVASCRIPT
+# ================================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+.npm
+.yarn/
+.pnp.*
 
-# Rust
+# Build outputs
+dist/
+dist-ssr/
+out/
+*.tsbuildinfo
+
+# Next.js
+.next/
+# ================================
+# RUST
+# ================================
 target/
 Cargo.lock
 
-# IDEs
+# ================================
+# IDEs & EDITORS
+# ================================
+# VSCode
 .vscode/
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains
 .idea/
+*.iml
+*.ipr
+*.iws
+
+# Vim/Emacs
 *.swp
 *.swo
+*.sw?
+*~
 
-# OS
+# Notepad++
+NotePad++/
+
+# ================================
+# OPERATING SYSTEMS
+# ================================
+# macOS
 .DS_Store
-Thumbs.db
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
 
-# Environment
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.fuse_hidden*
+.nfs*
+.Trash-*
+
+# ================================
+# ENVIRONMENT & SECRETS
+# ================================
 .env
 .env.local
 .env.*.local
+*.key
+*.pem
+.secrets/
+secrets/
+local_settings.py
 
-# Logs
+# ================================
+# LOGS & RUNTIME
+# ================================
 logs/
 *.log
-
-# Runtime data
 pids/
 *.pid
 *.seed
 *.pid.lock
 
-# Coverage
-coverage/
-.nyc_output/
-.coverage
-htmlcov/
+# ================================
+# DATABASES
+# ================================
+*.db
+*.sqlite
+*.sqlite3
+db.sqlite3
+db.sqlite3-journal
 
-# Cache
+# ================================
+# ARCHIVES & BINARIES
+# ================================
+*.7z
+*.bin
+*.bz2
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.tgz
+*.xz
+*.zip
+
+# ================================
+# TEMPORARY & CACHE
+# ================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.stackdump
 .cache/
-.pytest_cache/
+.nyc_output/
+.ruff_cache/
+
+# ================================
+# PROJECT-SPECIFIC
+# ================================
+# Documentation builds
+docs/_build/
+/site
+
+# Test coverage
+coverage/
+cover/
+
+# Build artifacts
+*.manifest
+*.spec
+*.min.js
+*.min.css
+
+# Old/archived content
+old-sort/
+UNTRACKED_ARCHIVE/
+CLAUDE-CODE/
+INFO/
+OVERLEAF-/
+PAPERS/
+QAP-CLAUDE-CODE-main/
+Text/
+
+# Instance-specific
+instance/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# IPython
+ipython_config.py
+
+# pyenv
+.python-version
+
+# Cython debug
+cython_debug/
+
+# Package manager locks (keep in specific directories if needed)
+# Uncomment if you want to ignore all lock files
+# Pipfile.lock
+# poetry.lock
+# package-lock.json
+# yarn.lock

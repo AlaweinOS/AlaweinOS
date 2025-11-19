@@ -1,39 +1,145 @@
-# Code Ownership and Review Requirements
+# AlaweinOS Monorepo - Code Ownership and Review Requirements
 #
 # For more information about CODEOWNERS, see:
 # https://help.github.com/en/articles/about-code-owners
+#
+# Owner: Meshal Alawein (meshal@berkeley.edu)
+# Organization: AlaweinOS - Enterprise Software & Optimization Systems
+# Last Updated: 2025-11-19
 
-# Global owners for all files unless otherwise specified
-* Meshal Alawein
+# ================================================================
+# GLOBAL OWNERSHIP
+# ================================================================
+# Global owner for all files unless otherwise specified
+* @meshal-alawein meshal@berkeley.edu
 
-# Documentation
-/docs/ Meshal Alawein
-*.md Meshal Alawein
-/CONTRIBUTING.md Meshal Alawein
-/SECURITY.md Meshal Alawein
+# ================================================================
+# MAJOR SYSTEMS
+# ================================================================
 
-# Configuration files
-/.github/ Meshal Alawein
-/.meta/ Meshal Alawein
-*.yml Meshal Alawein
-*.yaml Meshal Alawein
+# MEZAN - Meta-Equilibrium Zero-regret Assignment Network
+/MEZAN/ @meshal-alawein meshal@berkeley.edu
+/MEZAN/**/*.py @meshal-alawein
+/MEZAN/**/*.md @meshal-alawein
 
-# CI/CD
-/.github/workflows/ Meshal Alawein
+# TalAI - Autonomous Testing & Laboratory Analysis Intelligence
+/TalAI/ @meshal-alawein meshal@berkeley.edu
+/TalAI/**/*.py @meshal-alawein
+/TalAI/**/*.md @meshal-alawein
 
-# Build and Dependencies
-/requirements*.txt Meshal Alawein
-/pyproject.toml Meshal Alawein
-/package.json Meshal Alawein
-/package-lock.json Meshal Alawein
-/Makefile Meshal Alawein
+# Optilibria - Universal Optimization Framework
+/optilibria/ @meshal-alawein meshal@berkeley.edu
+/optilibria/**/*.py @meshal-alawein
+/optilibria/**/*.md @meshal-alawein
 
-# Source code - default to author
-/src/ Meshal Alawein
+# QMLab - Quantum Machine Learning Laboratory
+/qmlab/ @meshal-alawein meshal@berkeley.edu
+/qmlab/**/*.tsx @meshal-alawein
+/qmlab/**/*.ts @meshal-alawein
+/qmlab/**/*.md @meshal-alawein
 
-# Tests
-/tests/ Meshal Alawein
+# SimCore - High-Performance Simulation Core Engine
+/SimCore/ @meshal-alawein meshal@berkeley.edu
+/SimCore/**/*.py @meshal-alawein
+/SimCore/**/*.md @meshal-alawein
 
-# License and legal
-/LICENSE* Meshal Alawein
-/COPYRIGHT Meshal Alawein
+# ================================================================
+# DOCUMENTATION
+# ================================================================
+/docs/ @meshal-alawein
+*.md @meshal-alawein
+/README.md @meshal-alawein
+/CONTRIBUTING.md @meshal-alawein
+/SECURITY.md @meshal-alawein
+/CODE_OF_CONDUCT.md @meshal-alawein
+/CLAUDE.md @meshal-alawein
+
+# ================================================================
+# CONFIGURATION & INFRASTRUCTURE
+# ================================================================
+# GitHub configuration
+/.github/ @meshal-alawein
+/.github/workflows/ @meshal-alawein
+
+# Meta configuration
+/.meta/ @meshal-alawein
+/.ai-config.yml @meshal-alawein
+
+# Git configuration
+/.gitignore @meshal-alawein
+/.gitattributes @meshal-alawein
+/.pre-commit-config.yaml @meshal-alawein
+
+# Docker & deployment
+**/Dockerfile @meshal-alawein
+**/docker-compose*.yml @meshal-alawein
+**/k8s/ @meshal-alawein
+**/helm/ @meshal-alawein
+
+# YAML/JSON configuration
+*.yml @meshal-alawein
+*.yaml @meshal-alawein
+*.json @meshal-alawein
+
+# ================================================================
+# BUILD & DEPENDENCIES
+# ================================================================
+# Python dependencies
+/requirements*.txt @meshal-alawein
+/pyproject.toml @meshal-alawein
+/setup.py @meshal-alawein
+/setup.cfg @meshal-alawein
+**/pyproject.toml @meshal-alawein
+**/requirements*.txt @meshal-alawein
+
+# Node.js dependencies
+/package.json @meshal-alawein
+/package-lock.json @meshal-alawein
+/yarn.lock @meshal-alawein
+/pnpm-lock.yaml @meshal-alawein
+**/package.json @meshal-alawein
+
+# Build configuration
+/Makefile @meshal-alawein
+**/Makefile @meshal-alawein
+/tsconfig.json @meshal-alawein
+/vite.config.ts @meshal-alawein
+
+# ================================================================
+# TESTING
+# ================================================================
+/tests/ @meshal-alawein
+**/tests/ @meshal-alawein
+**/*_test.py @meshal-alawein
+**/test_*.py @meshal-alawein
+**/*.test.ts @meshal-alawein
+**/*.test.tsx @meshal-alawein
+**/conftest.py @meshal-alawein
+**/pytest.ini @meshal-alawein
+
+# ================================================================
+# LEGAL & LICENSING
+# ================================================================
+/LICENSE* @meshal-alawein
+/COPYRIGHT @meshal-alawein
+**/LICENSE* @meshal-alawein
+
+# ================================================================
+# SCRIPTS & AUTOMATION
+# ================================================================
+/scripts/ @meshal-alawein
+**/scripts/ @meshal-alawein
+**/*.sh @meshal-alawein
+
+# ================================================================
+# SOURCE CODE
+# ================================================================
+# Python source
+/src/ @meshal-alawein
+**/src/**/*.py @meshal-alawein
+
+# TypeScript/JavaScript source
+**/src/**/*.ts @meshal-alawein
+**/src/**/*.tsx @meshal-alawein
+**/src/**/*.js @meshal-alawein
+**/src/**/*.jsx @meshal-alawein
