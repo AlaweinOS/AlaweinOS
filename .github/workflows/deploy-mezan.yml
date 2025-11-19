@@ -1,0 +1,343 @@
+name: Deploy MEZAN ATLAS
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+    paths:
+      - 'MEZAN/ATLAS/**'
+      - '.github/workflows/deploy-mezan.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'MEZAN/ATLAS/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/mezan-atlas
+  CHART_PATH: MEZAN/ATLAS/atlas-core/helm
+  K8S_PATH: MEZAN/ATLAS/atlas-core/k8s
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          pip install -r requirements.txt
+          pip install pytest pytest-cov black ruff mypy
+
+      - name: Lint with ruff
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          ruff check .
+
+      - name: Format check with black
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          black --check .
+
+      - name: Type check with mypy
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          mypy --ignore-missing-imports .
+
+      - name: Run tests
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          pytest --cov=atlas --cov-report=xml --cov-report=html
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./MEZAN/ATLAS/atlas-core/coverage.xml
+          flags: unittests
+          name: mezan-atlas
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./MEZAN/ATLAS/atlas-core
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ github.sha }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.build.outputs.digest }}
+          output-file: sbom.spdx
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: sbom.spdx
+
+  security-scan:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.image-digest }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  deploy-dev:
+    if: github.ref == 'refs/heads/develop'
+    needs: [build, security-scan]
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.3'
+
+      - name: Configure kubectl
+        env:
+          KUBE_CONFIG: ${{ secrets.DEV_KUBE_CONFIG }}
+        run: |
+          echo "$KUBE_CONFIG" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Deploy with Kustomize
+        run: |
+          cd ${{ env.K8S_PATH }}/overlays/dev
+          kustomize edit set image mezan-atlas=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.image-digest }}
+          kustomize build . | kubectl apply -f -
+          kubectl rollout status deployment/dev-mezan-atlas-api -n mezan-atlas-dev
+
+      - name: Run smoke tests
+        run: |
+          kubectl run smoke-test --rm -i --restart=Never \
+            --image=curlimages/curl:latest \
+            -- curl -f http://dev-mezan-atlas-api.mezan-atlas-dev:5000/health
+
+  deploy-staging:
+    if: github.ref == 'refs/heads/staging' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    needs: [build, security-scan]
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.13.2'
+
+      - name: Configure kubectl
+        env:
+          KUBE_CONFIG: ${{ secrets.STAGING_KUBE_CONFIG }}
+        run: |
+          echo "$KUBE_CONFIG" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Deploy with Helm
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.STAGING_ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.STAGING_OPENAI_API_KEY }}
+        run: |
+          helm upgrade --install mezan-atlas-staging \
+            ${{ env.CHART_PATH }} \
+            --namespace mezan-atlas-staging \
+            --create-namespace \
+            --values ${{ env.CHART_PATH }}/values.yaml \
+            --values ${{ env.CHART_PATH }}/values-staging.yaml \
+            --set image.tag=${{ needs.build.outputs.image-digest }} \
+            --set secrets.anthropicApiKey=$ANTHROPIC_API_KEY \
+            --set secrets.openaiApiKey=$OPENAI_API_KEY \
+            --wait --timeout 10m
+
+      - name: Run integration tests
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          pip install pytest requests
+          pytest tests/integration/ --staging-url=https://staging.mezan-atlas.example.com
+
+  deploy-production:
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    needs: [build, security-scan]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://api.mezan-atlas.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.13.2'
+
+      - name: Configure kubectl for production
+        env:
+          KUBE_CONFIG: ${{ secrets.PROD_KUBE_CONFIG }}
+        run: |
+          echo "$KUBE_CONFIG" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Create backup before deployment
+        run: |
+          kubectl create job backup-$(date +%s) \
+            --from=cronjob/mezan-atlas-backup \
+            -n mezan-atlas-production
+
+      - name: Deploy to production with Helm
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.PROD_ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.PROD_OPENAI_API_KEY }}
+          REDIS_PASSWORD: ${{ secrets.PROD_REDIS_PASSWORD }}
+        run: |
+          helm upgrade --install mezan-atlas \
+            ${{ env.CHART_PATH }} \
+            --namespace mezan-atlas-production \
+            --create-namespace \
+            --values ${{ env.CHART_PATH }}/values-prod.yaml \
+            --set image.tag=${{ needs.build.outputs.image-digest }} \
+            --set secrets.anthropicApiKey=$ANTHROPIC_API_KEY \
+            --set secrets.openaiApiKey=$OPENAI_API_KEY \
+            --set secrets.redisPassword=$REDIS_PASSWORD \
+            --set-string podAnnotations."deployed-by"="${{ github.actor }}" \
+            --set-string podAnnotations."deployed-at"="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --set-string podAnnotations."commit-sha"="${{ github.sha }}" \
+            --wait --timeout 15m \
+            --atomic \
+            --cleanup-on-fail
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n mezan-atlas-production
+          kubectl run verify-deployment --rm -i --restart=Never \
+            --image=curlimages/curl:latest \
+            -- curl -f https://api.mezan-atlas.com/health
+
+      - name: Run production smoke tests
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          pip install pytest requests
+          pytest tests/smoke/ --production-url=https://api.mezan-atlas.com
+
+      - name: Notify deployment
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Production deployment ${{ job.status }}
+            Deployed by: ${{ github.actor }}
+            Commit: ${{ github.sha }}
+            Image: ${{ needs.build.outputs.image-digest }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  rollback:
+    if: failure() && github.ref == 'refs/heads/main'
+    needs: deploy-production
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Configure kubectl
+        env:
+          KUBE_CONFIG: ${{ secrets.PROD_KUBE_CONFIG }}
+        run: |
+          echo "$KUBE_CONFIG" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Rollback deployment
+        run: |
+          helm rollback mezan-atlas -n mezan-atlas-production
+
+      - name: Notify rollback
+        uses: 8398a7/action-slack@v3
+        with:
+          status: 'warning'
+          text: |
+            Production deployment rolled back
+            Triggered by: ${{ github.actor }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}

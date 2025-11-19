@@ -1,0 +1,345 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'MEZAN/**'
+      - '.github/workflows/integration_tests.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'MEZAN/**'
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - integration
+          - performance
+          - chaos
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: atlas
+          POSTGRES_PASSWORD: atlas_password
+          POSTGRES_DB: atlas_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libssl-dev \
+            libffi-dev \
+            python3-dev \
+            redis-tools \
+            postgresql-client
+
+      - name: Install Python dependencies
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          pip install -e .
+
+      - name: Wait for services
+        run: |
+          until redis-cli ping; do
+            echo "Waiting for Redis..."
+            sleep 1
+          done
+          until pg_isready -h localhost -p 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 1
+          done
+
+      - name: Run database migrations
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          python manage.py migrate --no-input
+
+      - name: Run integration tests
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          pytest tests/integration/ \
+            -v \
+            --tb=short \
+            --timeout=300 \
+            --cov=atlas_core \
+            --cov-report=xml \
+            --cov-report=html \
+            --junitxml=test-results/integration.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: |
+            MEZAN/ATLAS/atlas-core/test-results/
+            MEZAN/ATLAS/atlas-core/htmlcov/
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: MEZAN/ATLAS/atlas-core/coverage.xml
+          flags: integration
+          name: integration-tests
+
+  performance-benchmarks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: github.event_name == 'schedule' || github.event.inputs.test_suite == 'performance' || github.event.inputs.test_suite == 'all'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          pip install -r requirements.txt
+          pip install -r requirements-benchmark.txt
+
+      - name: Start services
+        run: |
+          docker-compose -f MEZAN/ATLAS/docker-compose.test.yml up -d
+          sleep 10
+
+      - name: Run throughput benchmarks
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          python tests/performance/benchmark_throughput.py
+
+      - name: Run latency benchmarks
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          python tests/performance/benchmark_latency.py
+
+      - name: Run scalability benchmarks
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          python tests/performance/benchmark_scalability.py
+
+      - name: Generate performance report
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          python scripts/generate_performance_report.py \
+            --input benchmark_*.json \
+            --output performance_report.html
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: |
+            MEZAN/ATLAS/atlas-core/benchmark_*.json
+            MEZAN/ATLAS/atlas-core/performance_report.html
+
+      - name: Compare with baseline
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          python scripts/compare_benchmarks.py \
+            --current benchmark_throughput_results.json \
+            --baseline .benchmarks/baseline.json \
+            --threshold 0.1
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('MEZAN/ATLAS/atlas-core/performance_report.html', 'utf8');
+            const summary = report.substring(0, 1000) + '...'; // First 1000 chars
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Performance Benchmark Results\n\n${summary}\n\n[View full report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
+            });
+
+  load-testing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    if: github.event_name == 'schedule' || github.event.inputs.test_suite == 'performance' || github.event.inputs.test_suite == 'all'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Locust
+        run: |
+          pip install locust
+
+      - name: Start application
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          docker-compose up -d
+          sleep 20
+
+      - name: Run load test
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          locust \
+            -f locustfile.py \
+            --host=http://localhost:8080 \
+            --headless \
+            --users 100 \
+            --spawn-rate 10 \
+            --run-time 10m \
+            --html locust_report.html \
+            --csv locust_results
+
+      - name: Upload load test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: load-test-results
+          path: |
+            MEZAN/ATLAS/atlas-core/locust_report.html
+            MEZAN/ATLAS/atlas-core/locust_results*.csv
+
+  chaos-engineering:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event.inputs.test_suite == 'chaos'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          pip install -r requirements.txt
+          pip install -r requirements-chaos.txt
+
+      - name: Start test cluster
+        run: |
+          cd MEZAN/ATLAS
+          docker-compose -f docker-compose.chaos.yml up -d
+          sleep 30
+
+      - name: Run network chaos tests
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          sudo python tests/chaos/chaos_network.py
+
+      - name: Run node failure tests
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          python tests/chaos/chaos_node_failure.py
+
+      - name: Generate chaos report
+        run: |
+          cd MEZAN/ATLAS/atlas-core
+          python scripts/generate_chaos_report.py
+
+      - name: Upload chaos test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: chaos-results
+          path: |
+            MEZAN/ATLAS/atlas-core/chaos_report.html
+            MEZAN/ATLAS/atlas-core/chaos_results.json
+
+  notify-results:
+    runs-on: ubuntu-latest
+    needs: [integration-tests, performance-benchmarks, load-testing]
+    if: always()
+
+    steps:
+      - name: Determine status
+        id: status
+        run: |
+          if [[ "${{ needs.integration-tests.result }}" == "failure" || \
+                "${{ needs.performance-benchmarks.result }}" == "failure" || \
+                "${{ needs.load-testing.result }}" == "failure" ]]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification
+        if: github.event_name == 'schedule'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ steps.status.outputs.status }}
+          text: |
+            Test Suite Results:
+            - Integration: ${{ needs.integration-tests.result }}
+            - Performance: ${{ needs.performance-benchmarks.result }}
+            - Load Testing: ${{ needs.load-testing.result }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Create issue on failure
+        if: steps.status.outputs.status == 'failure' && github.event_name == 'schedule'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Test Suite Failure - ${new Date().toISOString().split('T')[0]}`,
+              body: `The nightly test suite has failed. Please investigate:\n\n- Integration Tests: ${{ needs.integration-tests.result }}\n- Performance Benchmarks: ${{ needs.performance-benchmarks.result }}\n- Load Testing: ${{ needs.load-testing.result }}\n\n[View workflow run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+              labels: ['bug', 'testing', 'automated']
+            });
