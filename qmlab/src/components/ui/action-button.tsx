@@ -57,52 +57,123 @@ export interface ActionButtonProps
    */
   icon?: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
   /**
-   * Additional accessible label - only use if visible text doesn't fully describe action
+   * Descriptive action label for screen readers (REQUIRED for accessibility)
+   * IMPORTANT: Should be verb-first and describe the action clearly
+   * Examples:
+   * - "Start training quantum machine learning model"
+   * - "Export circuit as Qiskit Python code"
+   * - "Reset workspace — clears all gates and qubits"
    */
-  ariaLabel?: string;
+  ariaLabel: string;
   /**
    * Loading state with accessible announcement
    */
   loading?: boolean;
   /**
+   * Loading text announced to screen readers
+   */
+  loadingText?: string;
+  /**
    * File metadata for download actions (e.g., "ONNX, 3.2 MB")
    */
   fileMeta?: string;
+  /**
+   * Destructive action - adds screen reader warning
+   */
+  destructive?: boolean;
+  /**
+   * Quantum energy field effect on hover
+   */
+  quantumEffect?: boolean;
 }
 
 /**
  * Accessible action button with descriptive labels and proper sizing
- * 
+ *
  * Guidelines:
  * - Always use verb-first descriptive labels ("Start training", not "Train")
  * - Include file metadata for downloads ("Export model (ONNX)")
- * - Minimum 44x44px touch targets
+ * - Minimum 44x44px touch targets (WCAG 2.1 AA requirement)
  * - Clear consequence for destructive actions ("Reset circuit — clears workspace")
+ * - Loading states announced to screen readers with aria-live
+ *
+ * @example
+ * <ActionButton
+ *   ariaLabel="Start training quantum machine learning model"
+ *   icon={Play}
+ *   quantumEffect
+ *   onClick={handleStart}
+ * >
+ *   Start Training
+ * </ActionButton>
+ *
+ * @example
+ * <ActionButton
+ *   variant="danger"
+ *   ariaLabel="Reset workspace — clears all gates and qubits"
+ *   destructive
+ *   icon={RotateCcw}
+ *   onClick={handleReset}
+ * >
+ *   Reset
+ * </ActionButton>
  */
 export const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
-  ({ className, variant, size, icon: Icon, ariaLabel, loading, fileMeta, children, ...props }, ref) => {
+  ({
+    className,
+    variant,
+    size,
+    icon: Icon,
+    ariaLabel,
+    loading,
+    loadingText = "Loading",
+    fileMeta,
+    destructive = false,
+    quantumEffect = false,
+    children,
+    ...props
+  }, ref) => {
+    // Build visible text with file metadata if provided
     const visibleText = fileMeta ? `${children} (${fileMeta})` : children;
-    const accessibleLabel = ariaLabel || visibleText;
+
+    // Build accessible label (use loading text when loading)
+    const accessibleLabel = loading ? loadingText : ariaLabel;
 
     return (
       <button
-        className={cn(actionButtonVariants({ variant, size }), className)}
+        className={cn(
+          actionButtonVariants({ variant, size }),
+          quantumEffect && "quantum-energy-field",
+          className
+        )}
         ref={ref}
-        aria-label={typeof accessibleLabel === 'string' ? accessibleLabel : undefined}
+        aria-label={accessibleLabel}
+        aria-busy={loading}
+        aria-live={loading ? "polite" : undefined}
         disabled={loading || props.disabled}
+        role="button"
+        tabIndex={0}
         {...props}
       >
         {loading ? (
           <>
-            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-            <span className="sr-only">Loading...</span>
+            <div
+              className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"
+              aria-hidden="true"
+            />
+            <span className="sr-only">{loadingText}...</span>
           </>
         ) : Icon ? (
           <Icon aria-hidden={true} className="w-4 h-4 flex-shrink-0" />
         ) : null}
-        
+
         {size !== "icon" && (
           <span className="flex-1 text-left">{visibleText}</span>
+        )}
+
+        {/* Screen reader hint for destructive actions */}
+        {destructive && !loading && (
+          <span className="sr-only"> — this action cannot be undone</span>
         )}
       </button>
     );
