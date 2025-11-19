@@ -1,110 +1,27 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-.hypothesis/
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.ruff_cache/
-.pytype/
-
-# Virtual environments
-venv/
-env/
-ENV/
-.venv/
-
-# Node.js
-node_modules/
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.npm
-.yarn/
-.pnp.*
+pnpm-debug.log*
+lerna-debug.log*
 
-# TypeScript
-*.tsbuildinfo
+node_modules
+dist
+dist-ssr
+*.local
 
-# Build outputs
-dist/
-build/
-out/
-*.min.js
-*.min.css
+# Audit artifacts (generated)
+.audit/
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
-
-# Environment files
-.env
-.env.local
-.env.*.local
-*.env
-
-# Logs
-logs/
-*.log
-
-# OS files
-Thumbs.db
-.DS_Store
-
-# Temporary files
-*.tmp
-*.temp
-.cache/
-
-# Test coverage
-coverage/
-.nyc_output/
-
-# Documentation builds
-docs/_build/
-site/
-
-# Jupyter Notebooks
-.ipynb_checkpoints/
-*.ipynb
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Secrets
-*.pem
-*.key
-secrets/
-.secrets/
-
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
