@@ -1,6 +1,6 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
-import { BrillouinZoneData } from '@/lib/graphene-physics-fixed';
+import { type BrillouinZoneData } from '@/lib/graphene-physics-fixed';
 import { 
   UNIFIED_SCIENTIFIC_PLOT_SYSTEM as PLOT
 } from '@/lib/scientific-plot-system';

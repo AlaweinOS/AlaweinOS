@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ModuleCard } from '@/components/ModuleCard';
-import { PhysicsModule } from '@/data/modules';
+import { type PhysicsModule } from '@/data/modules';
 
 interface AnimatedModuleTileProps {
   module: PhysicsModule;

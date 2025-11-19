@@ -253,7 +253,7 @@ const BZFolding: React.FC = () => {
   // Get magic angle info for TBG
   const magicAngleInfo = useMemo(() => {
     if (dataTBG.length > 0) {
-      const sample = dataTBG[0] as any;
+      const sample = dataTBG[0];
       return {
         magicAngle: sample.magicAngle,
         isMagicAngle: sample.isMagicAngle,

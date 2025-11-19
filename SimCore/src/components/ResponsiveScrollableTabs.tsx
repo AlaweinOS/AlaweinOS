@@ -58,7 +58,7 @@ export function ResponsiveScrollableTabs({
   // Auto-scroll active tab into view
   useEffect(() => {
     const container = scrollContainerRef.current;
-    const activeButton = container?.querySelector(`[data-value="${activeTab}"]`) as HTMLElement;
+    const activeButton = container?.querySelector(`[data-value="${activeTab}"]`);
     
     if (container && activeButton) {
       const containerRect = container.getBoundingClientRect();

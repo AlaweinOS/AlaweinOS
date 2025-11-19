@@ -89,18 +89,12 @@ export const AdvancedPlot: React.FC<AdvancedPlotProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [plotKey, setPlotKey] = useState(0);
 
-  // Debug plotting data - only once
-  if (!data || data.length === 0) {
-    console.log('AdvancedPlot: No data received');
-    return (
-      <div className="h-full flex items-center justify-center text-muted-foreground">
-        <p>No plot data available</p>
-      </div>
-    );
-  }
-
   // Convert our data format to Plotly format
   const plotlyData = useMemo(() => {
+    if (!data || data.length === 0) {
+      return [];
+    }
+
     return data.map((item, index) => {
       const baseTrace: any = {
         name: item.name || `Trace ${index + 1}`,
@@ -320,6 +314,15 @@ export const AdvancedPlot: React.FC<AdvancedPlotProps> = ({
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen(prev => !prev);
   }, []);
+
+  // Early return after all hooks are called
+  if (!data || data.length === 0 || plotlyData.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center text-muted-foreground">
+        <p>No plot data available</p>
+      </div>
+    );
+  }
 
   return (
     <Card className={cn(

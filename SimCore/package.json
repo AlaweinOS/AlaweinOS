@@ -1,7 +1,7 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "@alaweinos/simcore",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest -c vite.config.test.ts",
     "push": "git add . && git commit -m \"chore: deploy\" || echo No changes to commit && git push origin main",
-    "deploy:lovable": "npm run build && npm run push",
+    "deploy": "npm run build",
     "deploy:replit": "npm run push",
     "start": "npm run build && npx serve -s dist -l ${PORT:-3000} -n",
     "audit:prep": "mkdir -p .audit .audit/lhci .audit/axe .audit/playwright .audit/css || true",
@@ -115,7 +115,6 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
-    "lovable-tagger": "^1.1.7",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11",
     "@testing-library/react": "^16.0.0",

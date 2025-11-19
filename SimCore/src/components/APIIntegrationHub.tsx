@@ -7,11 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
-  Globe, 
-  Key, 
-  Send, 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Globe,
+  Send,
   Database,
   Cloud,
   Zap,
@@ -64,7 +63,7 @@ export const APIIntegrationHub: React.FC = () => {
 
   const [activeEndpointId, setActiveEndpointId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<string>('');
-  const [responseData, setResponseData] = useState<any>(null);
+  const [responseData, setResponseData] = useState<unknown>(null);
   const [isInvoking, setIsInvoking] = useState<boolean>(false);
 
   const testConnection = async (endpoint: APIEndpoint) => {
@@ -85,7 +84,7 @@ export const APIIntegrationHub: React.FC = () => {
             ? { model: 'claude-3-5-haiku-20241022', system: 'You are SimCore assistant.', messages: [{ role: 'user', content: 'ping' }] }
             : { model: 'llama-3.1-sonar-small-128k-online', messages: [{ role: 'user', content: 'ping' }] };
 
-        const { data, error } = await supabase.functions.invoke(fn, { body });
+        const { data: _data, error } = await supabase.functions.invoke(fn, { body });
         if (error) throw error;
         setEndpoints(prev => prev.map(ep => ep.id === endpoint.id ? { ...ep, status: 'connected', lastUsed: new Date() } : ep));
         toast({ title: 'Connection Successful', description: `Connected to ${endpoint.name}` });

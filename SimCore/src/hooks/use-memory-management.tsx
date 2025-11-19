@@ -117,7 +117,7 @@ export class TypedArrayPool {
     const pool = this.pools.get(key);
     
     if (pool && pool.length > 0) {
-      return pool.pop()!;
+      return pool.pop();
     }
     
     return new Float32Array(size);

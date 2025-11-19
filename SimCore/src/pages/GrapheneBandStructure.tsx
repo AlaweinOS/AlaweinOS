@@ -12,7 +12,7 @@ import { PhysicsModuleHeader } from '@/components/PhysicsModuleHeader';
 import { useToast } from '@/hooks/use-toast';
 import { useSEO } from '@/hooks/use-seo';
 import { 
-  GrapheneParameters, 
+  type GrapheneParameters, 
   DEFAULT_GRAPHENE_PARAMETERS,
   calculateExactBandStructure,
   calculateNNOnlyBandStructure,
@@ -193,7 +193,7 @@ export default function GrapheneBandStructure() {
   const captureAndDownload = async (elementId: string, filename: string) => {
     const el = document.getElementById(elementId);
     if (!el) return;
-    const canvas = await html2canvas(el as HTMLElement, { backgroundColor: null, scale: 2 });
+    const canvas = await html2canvas(el, { backgroundColor: null, scale: 2 });
     const dataUrl = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = dataUrl;

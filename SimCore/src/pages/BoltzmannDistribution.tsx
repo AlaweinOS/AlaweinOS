@@ -129,7 +129,7 @@ class StatisticalMechanicsEngine {
           const quantumNumbers = `(${nx},${ny},${nz})`;
           
           if (levelMap.has(energyKey)) {
-            const existingLevel = levelMap.get(energyKey)!;
+            const existingLevel = levelMap.get(energyKey);
             existingLevel.degeneracy++;
             existingLevel.quantumNumbers += `, ${quantumNumbers}`;
           } else {

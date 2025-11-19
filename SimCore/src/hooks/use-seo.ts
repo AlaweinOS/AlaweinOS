@@ -14,7 +14,7 @@ export function useSEO({ title, description, canonical, image }: UseSEOOptions) 
     }
 
     const ensureMeta = (selector: string, create: () => HTMLElement) => {
-      let el = document.querySelector(selector) as HTMLElement | null;
+      let el = document.querySelector(selector);
       if (!el) {
         el = create();
         document.head.appendChild(el);

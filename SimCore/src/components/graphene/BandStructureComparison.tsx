@@ -1,6 +1,6 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
-import { BandStructureResult } from '@/lib/graphene-physics-exact';
+import { type BandStructureResult } from '@/lib/graphene-physics-exact';
 import { UNIFIED_SCIENTIFIC_PLOT_SYSTEM as PLOT, PHYSICS_AXIS_LABELS, PHYSICS_ENERGY_RANGES } from '@/lib/scientific-plot-system';
 
 interface BandStructureComparisonProps {
@@ -126,7 +126,7 @@ export function BandStructureComparison({
       tickmode: 'array' as const
     },
     shapes
-  } as any;
+  };
 
   return (
     <div className="w-full h-full">

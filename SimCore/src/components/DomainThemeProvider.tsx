@@ -5,7 +5,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { domainThemeController, PhysicsDomain } from '@/lib/domain-theme-controller';
+import { domainThemeController, type PhysicsDomain } from '@/lib/domain-theme-controller';
 import { physicsModules } from '@/data/modules';
 
 interface DomainThemeContextType {

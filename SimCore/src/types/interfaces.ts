@@ -14,7 +14,7 @@ export interface SimulationState {
   elapsed: number;
 }
 
-export interface SimulationResult<T = any> {
+export interface SimulationResult<T = unknown> {
   data: T;
   metadata: {
     parameters: PhysicsParameters;
@@ -121,7 +121,7 @@ export interface ThermodynamicProperties {
 // Machine learning interfaces
 export interface MLModel {
   type: 'regression' | 'classification' | 'clustering';
-  parameters: { [key: string]: any };
+  parameters: Record<string, number | string | boolean | number[]>;
   trained: boolean;
   accuracy?: number;
 }
@@ -150,7 +150,7 @@ export interface PlotData {
   z?: number[];
   labels?: string[];
   colors?: string[];
-  metadata?: { [key: string]: any };
+  metadata?: Record<string, unknown>;
 }
 
 export interface PlotConfig {
@@ -192,7 +192,7 @@ export interface ModuleCardProps {
 
 export interface ControlPanelProps {
   parameters: PhysicsParameters;
-  onParameterChange: (key: string, value: any) => void;
+  onParameterChange: (key: string, value: number | string | boolean | number[]) => void;
   disabled?: boolean;
   layout?: 'horizontal' | 'vertical';
 }
@@ -208,7 +208,7 @@ export interface PlotComponentProps {
 export interface ValidationError {
   field: string;
   message: string;
-  value: any;
+  value: unknown;
 }
 
 export interface SimulationError {
@@ -255,14 +255,14 @@ export interface AriaAttributes {
 }
 
 // Web Worker interfaces
-export interface WorkerMessage<T = any> {
+export interface WorkerMessage<T = unknown> {
   id: string;
   type: string;
   payload: T;
   timestamp: number;
 }
 
-export interface WorkerResponse<T = any> {
+export interface WorkerResponse<T = unknown> {
   id: string;
   success: boolean;
   result?: T;
@@ -280,7 +280,7 @@ export interface PWAConfig {
 
 export interface OfflineData {
   timestamp: number;
-  data: any;
+  data: unknown;
   type: string;
   size: number;
 }

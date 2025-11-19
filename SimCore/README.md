@@ -2,19 +2,19 @@
 
 *Modular scientific computing platform for physics, mathematics, and scientific machine learning*
 
-[![Live Platform](https://img.shields.io/badge/Live%20Platform-SimCore%20Lab-blue?style=for-the-badge)](https://lovable.dev/projects/f5c4348e-aff9-4eb4-bf03-0c2e06c7822a)
 [![React](https://img.shields.io/badge/React-18.3-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-green.svg)](https://www.typescriptlang.org/)
 [![WebGPU](https://img.shields.io/badge/WebGPU-Enabled-orange.svg)](#performance)
+[![Progressive Web App](https://img.shields.io/badge/PWA-Enabled-success.svg)](#pwa-features)
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# Clone and setup
-git clone https://github.com/alaweimm90/SimCore.git
-cd SimCore
+# Clone and setup (from AlaweinOS monorepo)
+git clone https://github.com/AlaweinOS/AlaweinOS.git
+cd AlaweinOS/SimCore
 npm install
 
 # Start development
@@ -184,7 +184,7 @@ If you use SimCore in research or education, please cite:
   title={SimCore: Interactive Scientific Computing Laboratory},
   author={Alawein, Dr. Meshal},
   year={2025},
-  url={https://github.com/alaweimm90/SimCore},
+  url={https://github.com/AlaweinOS/AlaweinOS/tree/main/SimCore},
   note={Modular web-based platform for physics, mathematics, and scientific ML}
 }
 ```

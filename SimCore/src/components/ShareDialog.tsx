@@ -21,7 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { collaborationManager, SimulationState } from '@/lib/collaboration-manager';
+import { collaborationManager, type SimulationState } from '@/lib/collaboration-manager';
 import { toast } from '@/hooks/use-toast';
 
 interface ShareDialogProps {

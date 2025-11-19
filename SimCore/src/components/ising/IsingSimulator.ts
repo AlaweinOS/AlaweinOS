@@ -62,7 +62,7 @@ export class IsingSimulator {
     const p_add = 1 - Math.exp(-2 / (this.kB * this.temperature));
     
     while (stack.length > 0) {
-      const [i, j] = stack.pop()!;
+      const [i, j] = stack.pop();
       if (visited[i][j]) continue;
       
       visited[i][j] = true;
@@ -225,7 +225,7 @@ export class IsingSimulator {
     let size = 0;
     
     while (stack.length > 0) {
-      const [i, j] = stack.pop()!;
+      const [i, j] = stack.pop();
       if (visited[i][j] || this.lattice[i][j] !== spin) continue;
       
       visited[i][j] = true;

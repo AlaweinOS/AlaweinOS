@@ -359,8 +359,8 @@ const [expandedDomains, setExpandedDomains] = useState<Record<'Physics' | 'Mathe
                                         className={getNavClasses(isActive(module.url))}
                                         title={module.title}
                                       >
-                                        {(module as any).iconName ? (
-                                          <DynamicIcon name={(module as any).iconName} className="w-4 h-4 flex-shrink-0" />
+                                        {(module).iconName ? (
+                                          <DynamicIcon name={(module).iconName} className="w-4 h-4 flex-shrink-0" />
                                         ) : (
                                           <module.icon className="w-4 h-4 flex-shrink-0" />
                                         )}

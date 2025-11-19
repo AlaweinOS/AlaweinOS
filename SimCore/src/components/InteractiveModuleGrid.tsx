@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 
 import { ModuleGrid } from '@/components/EnhancedResponsiveGrid';
 import { usePrefersReducedMotion } from '@/lib/accessibility-utils';
-import { PhysicsModule } from '@/data/modules';
+import { type PhysicsModule } from '@/data/modules';
 import { useAnalytics } from '@/lib/analytics';
 import { motion } from 'framer-motion';
 import { AnimatedModuleTile } from '@/components/module-grid/AnimatedModuleTile';

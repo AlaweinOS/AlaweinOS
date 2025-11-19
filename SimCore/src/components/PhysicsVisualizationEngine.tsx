@@ -197,7 +197,7 @@ export const Plot3D: React.FC<Plot3DProps> = ({
       title="Physics Simulation"
       xLabel="X"
       yLabel="Y"
-      domain={variant === 'fields' ? 'bandStructure' : variant as 'quantum' | 'statistical'}
+      domain={variant === 'fields' ? 'bandStructure' : variant}
       className="w-full h-full"
     />
   );

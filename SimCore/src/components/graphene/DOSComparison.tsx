@@ -1,6 +1,6 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
-import { DOSResult } from '@/lib/graphene-physics-exact';
+import { type DOSResult } from '@/lib/graphene-physics-exact';
 import { UNIFIED_SCIENTIFIC_PLOT_SYSTEM as PLOT, PHYSICS_AXIS_LABELS } from '@/lib/scientific-plot-system';
 
 interface DOSComparisonProps {

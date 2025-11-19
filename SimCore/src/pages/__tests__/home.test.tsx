@@ -7,7 +7,7 @@ describe('Home page', () => {
   it('renders hero content', () => {
     // Ensure matchMedia is available in jsdom
     if (!('matchMedia' in window)) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (window as any).matchMedia = () => ({
         matches: false,
         media: '',

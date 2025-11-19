@@ -17,9 +17,14 @@ function corsHeaders(origin: string | null) {
   } as const;
 }
 
+const MessageSchema = z.object({
+  role: z.string(),
+  content: z.string(),
+});
+
 const BodySchema = z.object({
   model: z.string().default("gpt-4o-mini"),
-  messages: z.array(z.any()).min(1, "messages array is required"),
+  messages: z.array(MessageSchema).min(1, "messages array is required"),
   temperature: z.number().min(0).max(2).default(0.3),
   max_tokens: z.number().int().positive().max(8192).default(1024),
 });
@@ -48,7 +53,7 @@ serve(async (req) => {
       );
     }
 
-    let body: any;
+    let body: unknown;
     try {
       body = JSON.parse(raw);
     } catch {

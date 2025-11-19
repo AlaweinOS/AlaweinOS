@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Plot from 'react-plotly.js';
-import { BandStructureResult, DOSResult } from '@/lib/graphene-physics-exact';
+import { type BandStructureResult, type DOSResult } from '@/lib/graphene-physics-exact';
 import { UNIFIED_SCIENTIFIC_PLOT_SYSTEM as PLOT, PHYSICS_AXIS_LABELS, PHYSICS_ENERGY_RANGES } from '@/lib/scientific-plot-system';
 // Utility to check for NaNs or bad values
 function hasInvalidValues(arr: number[]): boolean {

@@ -14,7 +14,7 @@ import {
   Target,
   Atom
 } from 'lucide-react';
-import { PhysicsModule, moduleCategories } from '@/data/modules';
+import { type PhysicsModule, moduleCategories } from '@/data/modules';
 import { useToast } from '@/hooks/use-toast';
 
 interface SearchAndFilterProps {
@@ -90,8 +90,8 @@ export const SearchAndFilter: React.FC<SearchAndFilterProps> = ({
             break;
           case 'difficulty':
             const diffOrder = { 'Beginner': 1, 'Intermediate': 2, 'Advanced': 3, 'Research': 4 };
-            comparison = (diffOrder[a.difficulty as keyof typeof diffOrder] || 0) - 
-                        (diffOrder[b.difficulty as keyof typeof diffOrder] || 0);
+            comparison = (diffOrder[a.difficulty] || 0) - 
+                        (diffOrder[b.difficulty] || 0);
             break;
         }
         

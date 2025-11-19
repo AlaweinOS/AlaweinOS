@@ -6,9 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Play, Pause, Square, Settings } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { AdvancedSimulation, SimulationConfig, SimulationState } from '@/lib/advanced-simulation';
+import { type AdvancedSimulation, type SimulationConfig, type SimulationState } from '@/lib/advanced-simulation';
 import { ShareDialog } from './ShareDialog';
-import { collaborationManager, SimulationState as CollabSimulationState } from '@/lib/collaboration-manager';
+import { collaborationManager, type SimulationState as CollabSimulationState } from '@/lib/collaboration-manager';
 
 import { MLAnalysis } from './MLAnalysis';
 

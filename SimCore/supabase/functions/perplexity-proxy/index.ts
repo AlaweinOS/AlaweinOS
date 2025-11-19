@@ -6,6 +6,25 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface PerplexityMessage {
+  role: string;
+  content: string;
+}
+
+interface PerplexityRequestBody {
+  model?: string;
+  messages?: PerplexityMessage[];
+  temperature?: number;
+  top_p?: number;
+  max_tokens?: number;
+  return_images?: boolean;
+  return_related_questions?: boolean;
+  frequency_penalty?: number;
+  presence_penalty?: number;
+  search_domain_filter?: string[];
+  search_recency_filter?: string;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,9 +47,9 @@ serve(async (req) => {
       );
     }
 
-    let body: any;
+    let body: PerplexityRequestBody;
     try {
-      body = JSON.parse(raw);
+      body = JSON.parse(raw) as PerplexityRequestBody;
     } catch {
       return new Response(
         JSON.stringify({ error: "Invalid JSON body" }),

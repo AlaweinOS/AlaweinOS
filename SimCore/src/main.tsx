@@ -23,4 +23,4 @@ onCLS(console.log);
 onFID(console.log);
 onLCP(console.log);
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")).render(<App />);

@@ -5,7 +5,7 @@
  * with proper semantic tokens and accessibility features.
  */
 
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useResponsive } from '@/hooks/use-responsive';

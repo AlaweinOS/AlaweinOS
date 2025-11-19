@@ -48,9 +48,9 @@ export function PerformanceMonitorDashboard({ className }: PerformanceMonitorDas
     setStats(performanceStats);
   };
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setRefreshing(true);
-    await loadData();
+    loadData();
     setTimeout(() => setRefreshing(false), 500);
   };
 

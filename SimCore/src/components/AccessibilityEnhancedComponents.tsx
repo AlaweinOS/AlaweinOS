@@ -5,7 +5,7 @@
  * proper ARIA support, keyboard navigation, and screen reader optimization.
  */
 
-import { ReactNode, useState, useRef, useEffect } from 'react';
+import { type ReactNode, useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';

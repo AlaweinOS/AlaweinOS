@@ -6,7 +6,6 @@
  */
 
 import { promises as fs } from 'fs';
-import { execSync } from 'child_process';
 import path from 'path';
 
 const PILOT_DOMAINS = ['quantum', 'statistical'];
@@ -180,7 +179,7 @@ class TokenPilot {
           await fs.access(pattern);
           existingPaths.push(pattern);
         }
-      } catch (error) {
+      } catch (_error) {
         // File doesn't exist, continue
       }
     }
@@ -201,7 +200,7 @@ class TokenPilot {
       return files
         .filter(file => file.endsWith(suffix) || suffix === '')
         .map(file => path.join(dir, file));
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }

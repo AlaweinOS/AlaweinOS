@@ -446,8 +446,9 @@ export const MobileCompatibilityTester: React.FC = () => {
       const testStart = performance.now();
       
       // Simulate mobile-intensive operations
+      let dummy = 0;
       for (let i = 0; i < 10000; i++) {
-        Math.sin(i) * Math.cos(i);
+        dummy += Math.sin(i) * Math.cos(i);
       }
       
       const computeTime = performance.now() - testStart;

@@ -17,7 +17,7 @@ import { ThemeProvider } from "@/components/EnhancedDarkMode";
 import { ProductionErrorBoundary, usePerformanceMonitor, ProductionStatusIndicator } from '@/components/ProductionReadiness';
 import { GradientBackground } from '@/components/EnhancedUIPolish';
 import { Button } from "@/components/ui/button";
-import { Mail, Linkedin, Github, Globe, GraduationCap, Atom } from "lucide-react";
+import { Mail, Linkedin, Github, Globe, GraduationCap } from "lucide-react";
 import BrandLogo from "@/components/ui/BrandLogo";
 import Index from "./pages/Index";
 import {
@@ -58,7 +58,7 @@ import { LazyTestingDashboard } from "./components/LazyRoutes";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const isMobile = useIsMobile();
+  const _isMobile = useIsMobile();
   usePerformanceMonitor();
   
   return (

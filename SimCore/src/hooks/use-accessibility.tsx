@@ -196,7 +196,7 @@ export function useFocusManagement() {
   const focusFirst = useCallback((container: HTMLElement) => {
     const focusable = container.querySelector(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    ) as HTMLElement;
+    );
     
     if (focusable) {
       focusable.focus();

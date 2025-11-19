@@ -157,8 +157,8 @@ Generated: ${new Date().toLocaleString()}
 ${data.description ? `Description:\n${data.description}\n\n` : ''}
 
 Parameters:
-${Object.entries(data.parameters || {}).map(([key, value]) => 
-  `${key}: ${value}`
+${Object.entries(data.parameters || {}).map(([key, value]) =>
+  `${key}: ${typeof value === 'object' ? JSON.stringify(value) : String(value)}`
 ).join('\n')}
 
 Results Summary:

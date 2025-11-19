@@ -539,8 +539,8 @@ const Index = () => {
                   <div className="flex justify-center mb-6">
                     <div className={`relative ${!prefersReducedMotion ? 'hover:scale-105 transition-all duration-500' : ''}`}>
                       <div className="w-56 h-56 md:w-64 md:h-64 rounded-3xl overflow-hidden shadow-quantum border border-border bg-gradient-to-br from-background/80 to-card/60 backdrop-blur-sm">
-                        <OptimizedImage 
-                          src="/lovable-uploads/9446dbe7-d528-4ecf-a88c-9ceda59c414a.png"
+                        <OptimizedImage
+                          src="/meshal-profile.png"
                           alt="Dr. Meshal Alawein – Computational Physicist"
                           className="w-full h-full object-cover transition-all duration-700"
                           sizes="(max-width: 768px) 224px, 256px"

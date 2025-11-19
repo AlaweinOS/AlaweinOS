@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import Plot from 'react-plotly.js';
-import { BandStructureResult } from '@/lib/graphene-tb-physics';
+import { type BandStructureResult } from '@/lib/graphene-tb-physics';
 import { 
   UNIFIED_SCIENTIFIC_PLOT_SYSTEM,
   PHYSICS_ENERGY_RANGES,

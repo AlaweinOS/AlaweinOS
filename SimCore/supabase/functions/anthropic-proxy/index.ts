@@ -6,6 +6,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface AnthropicMessage {
+  role: string;
+  content: string | Array<{ type: string; text: string }>;
+}
+
+interface AnthropicRequestBody {
+  model?: string;
+  messages?: AnthropicMessage[];
+  temperature?: number;
+  max_tokens?: number;
+  system?: string;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,9 +41,9 @@ serve(async (req) => {
       );
     }
 
-    let body: any;
+    let body: AnthropicRequestBody;
     try {
-      body = JSON.parse(raw);
+      body = JSON.parse(raw) as AnthropicRequestBody;
     } catch {
       return new Response(
         JSON.stringify({ error: "Invalid JSON body" }),
@@ -53,7 +66,7 @@ serve(async (req) => {
       );
     }
 
-    const normalized = messages.map((m: any) => ({
+    const normalized = messages.map((m: AnthropicMessage) => ({
       role: m.role === 'system' ? 'user' : m.role,
       content: Array.isArray(m.content)
         ? m.content

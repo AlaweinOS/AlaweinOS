@@ -1,13 +1,9 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import { type CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.f5c4348eaff94eb4bf030c2e06c7822a',
-  appName: 'simcore-explorer',
+  appId: 'com.alaweinos.simcore',
+  appName: 'SimCore',
   webDir: 'dist',
-  server: {
-    url: 'https://f5c4348e-aff9-4eb4-bf03-0c2e06c7822a.lovableproject.com?forceHideBadge=true',
-    cleartext: true
-  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,

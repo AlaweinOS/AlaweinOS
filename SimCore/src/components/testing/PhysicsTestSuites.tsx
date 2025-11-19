@@ -2,7 +2,7 @@
  * Pre-defined test suites for physics simulations
  */
 
-import { TestSuite } from './TestRunner';
+import { type TestSuite } from './TestRunner';
 
 // Utility functions for physics testing
 export const physicsTestUtils = {
@@ -38,7 +38,7 @@ export const physicsTestUtils = {
     }
 
     return {
-      result: result!,
+      result: result,
       avgTime: times.reduce((sum, time) => sum + time, 0) / times.length,
       minTime: Math.min(...times),
       maxTime: Math.max(...times)

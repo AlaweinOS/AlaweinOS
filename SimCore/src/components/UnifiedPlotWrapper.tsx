@@ -5,7 +5,7 @@
  * responsive behavior, and accessibility features.
  */
 
-import { ReactNode, useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import Plot from 'react-plotly.js';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';

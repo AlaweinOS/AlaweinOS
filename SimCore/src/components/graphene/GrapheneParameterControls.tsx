@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { RotateCcw, Download, Settings } from 'lucide-react';
 import { InlineMath } from '@/components/ui/Math';
-import { GrapheneParameters } from '@/lib/graphene-physics-exact';
+import { type GrapheneParameters } from '@/lib/graphene-physics-exact';
 
 interface GrapheneParameterControlsProps {
   parameters: GrapheneParameters;
