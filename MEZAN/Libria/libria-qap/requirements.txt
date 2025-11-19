@@ -1,33 +1,7 @@
 # QAPLibria Requirements
-# Python 3.10+
+numpy>=1.24.0
+scipy>=1.10.0
 
-# Core Dependencies
-numpy>=1.21.0,<2.0.0
-scipy>=1.7.0
-scikit-learn>=1.0.0
-
-# Deep Learning
-torch>=2.0.0
-torchvision>=0.15.0
-
-# Optimization
-ortools>=9.5.0
-# gurobi>=10.0.0  # Optional (requires license)
-
-# Data Processing
-pandas>=1.3.0
-
-# Testing
-pytest>=7.0.0
-pytest-cov>=3.0.0
-
-# Visualization
-matplotlib>=3.5.0
-seaborn>=0.11.0
-
-# Development
-ipython>=8.0.0
-jupyter>=1.0.0
-black>=22.0.0
-flake8>=4.0.0
-mypy>=0.950
+# Optional: GPU acceleration
+# torch>=2.0.0
+# jax>=0.4.0
