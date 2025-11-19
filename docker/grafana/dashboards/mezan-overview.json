@@ -1,0 +1,391 @@
+{
+  "dashboard": {
+    "title": "MEZAN Optimization Framework - Overview",
+    "tags": ["mezan", "optimization", "libria"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "10s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Solver Execution Rate",
+        "type": "graph",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "rate(libria_qap_solve_duration_seconds_count[5m])",
+            "legendFormat": "QAPLibria",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(libria_flow_solve_duration_seconds_count[5m])",
+            "legendFormat": "FlowLibria",
+            "refId": "B"
+          },
+          {
+            "expr": "rate(libria_alloc_solve_duration_seconds_count[5m])",
+            "legendFormat": "AllocLibria",
+            "refId": "C"
+          },
+          {
+            "expr": "rate(libria_graph_solve_duration_seconds_count[5m])",
+            "legendFormat": "GraphLibria",
+            "refId": "D"
+          },
+          {
+            "expr": "rate(libria_dual_solve_duration_seconds_count[5m])",
+            "legendFormat": "DualLibria",
+            "refId": "E"
+          },
+          {
+            "expr": "rate(libria_evo_solve_duration_seconds_count[5m])",
+            "legendFormat": "EvoLibria",
+            "refId": "F"
+          },
+          {
+            "expr": "rate(libria_meta_solve_duration_seconds_count[5m])",
+            "legendFormat": "MetaLibria",
+            "refId": "G"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Solves/sec",
+            "format": "short"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Solver Latency (P50, P95, P99)",
+        "type": "graph",
+        "gridPos": {
+          "x": 12,
+          "y": 0,
+          "w": 12,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(libria_qap_solve_duration_seconds_bucket[5m]))",
+            "legendFormat": "QAP P50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(libria_qap_solve_duration_seconds_bucket[5m]))",
+            "legendFormat": "QAP P95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(libria_qap_solve_duration_seconds_bucket[5m]))",
+            "legendFormat": "QAP P99",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Duration (seconds)",
+            "format": "s"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Objective Values (QAPLibria)",
+        "type": "graph",
+        "gridPos": {
+          "x": 0,
+          "y": 8,
+          "w": 8,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "libria_qap_objective_value",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Objective",
+            "format": "short"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Iterations per Solve",
+        "type": "stat",
+        "gridPos": {
+          "x": 8,
+          "y": 8,
+          "w": 8,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "avg(libria_qap_iterations_total)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "orientation": "auto",
+          "textMode": "value_and_name"
+        }
+      },
+      {
+        "id": 5,
+        "title": "GPU Utilization",
+        "type": "graph",
+        "gridPos": {
+          "x": 16,
+          "y": 8,
+          "w": 8,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "libria_qap_gpu_utilization_percent",
+            "legendFormat": "GPU {{gpu_id}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Utilization %",
+            "format": "percent",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Meta-Learning Solver Selection",
+        "type": "piechart",
+        "gridPos": {
+          "x": 0,
+          "y": 14,
+          "w": 8,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "sum by (solver) (libria_meta_selections_total)",
+            "legendFormat": "{{solver}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "UCB Scores (Meta-Learning)",
+        "type": "graph",
+        "gridPos": {
+          "x": 8,
+          "y": 14,
+          "w": 8,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "libria_meta_ucb_score",
+            "legendFormat": "{{solver}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "UCB Score",
+            "format": "short"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Cumulative Regret (Meta-Learning)",
+        "type": "graph",
+        "gridPos": {
+          "x": 16,
+          "y": 14,
+          "w": 8,
+          "h": 8
+        },
+        "targets": [
+          {
+            "expr": "libria_meta_regret",
+            "legendFormat": "Regret vs Oracle",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Cumulative Regret",
+            "format": "short"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Resource Allocation Utilization",
+        "type": "graph",
+        "gridPos": {
+          "x": 0,
+          "y": 22,
+          "w": 12,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "libria_alloc_budget_utilization",
+            "legendFormat": "Budget Used",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Utilization",
+            "format": "percentunit",
+            "min": 0,
+            "max": 1
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Network Entropy (GraphLibria)",
+        "type": "graph",
+        "gridPos": {
+          "x": 12,
+          "y": 22,
+          "w": 12,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "libria_graph_entropy",
+            "legendFormat": "Network Entropy",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Entropy",
+            "format": "short"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Pareto Front Size (EvoLibria)",
+        "type": "stat",
+        "gridPos": {
+          "x": 0,
+          "y": 28,
+          "w": 6,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "libria_evo_pareto_size",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "area",
+          "colorMode": "value"
+        }
+      },
+      {
+        "id": 12,
+        "title": "Hypervolume Indicator",
+        "type": "graph",
+        "gridPos": {
+          "x": 6,
+          "y": 28,
+          "w": 9,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "libria_evo_hypervolume",
+            "legendFormat": "Hypervolume",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "label": "Hypervolume",
+            "format": "short"
+          }
+        ]
+      },
+      {
+        "id": 13,
+        "title": "System Health",
+        "type": "stat",
+        "gridPos": {
+          "x": 15,
+          "y": 28,
+          "w": 9,
+          "h": 4
+        },
+        "targets": [
+          {
+            "expr": "up{job=\"mezan-api\"}",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "colorMode": "background",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "value": 0,
+                  "color": "red"
+                },
+                {
+                  "value": 1,
+                  "color": "green"
+                }
+              ]
+            },
+            "mappings": [
+              {
+                "type": "value",
+                "options": {
+                  "0": {
+                    "text": "DOWN",
+                    "color": "red"
+                  },
+                  "1": {
+                    "text": "UP",
+                    "color": "green"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,205 @@
+version: '3.8'
+
+services:
+  # MEZAN API Server (CPU)
+  mezan-api:
+    image: mezanai/mezan:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cpu
+      args:
+        MEZAN_VERSION: "4.1.0"
+        BUILD_DATE: ${BUILD_DATE:-2025-01-01}
+        VCS_REF: ${GIT_COMMIT:-dev}
+    container_name: mezan-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"      # HTTP API
+      - "9090:9090"      # Metrics
+    environment:
+      - MEZAN_ENV=production
+      - MEZAN_LOG_LEVEL=INFO
+      - MEZAN_REDIS_URL=redis://redis:6379/0
+      - MEZAN_PROMETHEUS_PORT=9090
+    volumes:
+      - mezan-data:/data
+      - mezan-logs:/logs
+      - ../config:/app/config:ro
+    depends_on:
+      - redis
+      - prometheus
+    networks:
+      - mezan-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+
+  # MEZAN GPU Worker (if GPU available)
+  mezan-gpu:
+    image: mezanai/mezan:gpu-latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.gpu
+    container_name: mezan-gpu
+    restart: unless-stopped
+    runtime: nvidia  # Requires nvidia-docker
+    environment:
+      - MEZAN_ENV=production
+      - MEZAN_GPU_ENABLED=1
+      - MEZAN_REDIS_URL=redis://redis:6379/0
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - mezan-data:/data
+      - mezan-logs:/logs
+      - mezan-cache:/cache
+    depends_on:
+      - redis
+    networks:
+      - mezan-network
+    profiles:
+      - gpu  # Only start with --profile gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Redis (for distributed state & caching)
+  redis:
+    image: redis:7-alpine
+    container_name: mezan-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - mezan-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prometheus (metrics collection)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mezan-prometheus
+    restart: unless-stopped
+    ports:
+      - "9091:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - mezan-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Grafana (visualization dashboards)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mezan-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=mezan_admin_2025
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - mezan-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jupyter Lab (for interactive demos & notebooks)
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    container_name: mezan-jupyter
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - GRANT_SUDO=yes
+    volumes:
+      - ../notebooks:/home/jovyan/work
+      - ../MEZAN:/home/jovyan/MEZAN:ro
+    networks:
+      - mezan-network
+    command: start-notebook.sh --NotebookApp.token='mezan2025' --NotebookApp.password=''
+    profiles:
+      - dev  # Only start with --profile dev
+
+  # pgAdmin (database management, if needed)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: mezan-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@mezan.ai
+      - PGADMIN_DEFAULT_PASSWORD=mezan_pgadmin_2025
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - mezan-network
+    profiles:
+      - dev
+
+networks:
+  mezan-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  mezan-data:
+    driver: local
+  mezan-logs:
+    driver: local
+  mezan-cache:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  pgadmin-data:
+    driver: local
