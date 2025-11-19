@@ -7,8 +7,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alaweinos"
-version = "4.0.0"
-description = "AlaweinOS - Enterprise Software & Optimization Systems Monorepo"
+version = "4.1.0"
+description = "AlaweinOS - Enterprise Software & Optimization Systems Monorepo (MEZAN V4.1.0)"
 authors = [{name = "Meshal Alawein", email = "meshal@berkeley.edu"}]
 license = {text = "Apache-2.0"}
 readme = "README.md"
@@ -42,6 +42,15 @@ Documentation = "https://github.com/AlaweinOS/AlaweinOS/blob/main/README.md"
 Repository = "https://github.com/AlaweinOS/AlaweinOS"
 "Bug Tracker" = "https://github.com/AlaweinOS/AlaweinOS/issues"
 
+# Core dependencies for MEZAN
+dependencies = [
+    "numpy>=1.24.0,<2.0.0",
+    "scipy>=1.10.0,<2.0.0",
+    "pandas>=1.3.0",
+    "networkx>=3.0",
+    "redis>=4.0.0",
+]
+
 # Development dependencies for the entire workspace
 [project.optional-dependencies]
 dev = [
@@ -50,7 +59,30 @@ dev = [
     "mypy>=1.0.0",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
+    "pytest-xdist>=3.0.0",
+    "pytest-timeout>=2.0.0",
     "pre-commit>=3.0.0",
+]
+
+# MEZAN-specific extras
+mezan = [
+    "flask>=2.3.0,<3.0.0",
+    "flask-cors>=4.0.0",
+    "anthropic>=0.18.0",
+    "openai>=1.0.0",
+    "scikit-learn>=1.3.0",
+    "pydantic>=2.0.0",
+]
+
+# GPU acceleration
+gpu = [
+    "torch>=2.0.0",
+]
+
+# Visualization
+viz = [
+    "matplotlib>=3.5.0",
+    "seaborn>=0.12.0",
 ]
 
 # Tool configurations
@@ -117,9 +149,11 @@ exclude = [
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q --strict-markers"
+addopts = "-ra -q --strict-markers --tb=short"
 testpaths = [
     "tests",
+    "MEZAN/core/tests",
+    "MEZAN/ATLAS/tests",
 ]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
