@@ -1,0 +1,337 @@
+name: Optilibria Nightly Benchmark
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Benchmark suite to run'
+        required: false
+        default: 'standard'
+        type: choice
+        options:
+          - smoke
+          - standard
+          - comprehensive
+          - method_comparison
+          - all
+  push:
+    branches:
+      - main
+      - 'claude/optilibria-*'
+    paths:
+      - 'optilibria/**'
+      - '.github/workflows/optilibria-nightly-benchmark.yml'
+  pull_request:
+    paths:
+      - 'optilibria/**'
+
+jobs:
+  benchmark:
+    name: Run Optilibria Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # 3 hours max
+
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for regression detection
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pypoetry
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential python3-dev
+
+      - name: Install Optilibria
+        run: |
+          cd optilibria
+          pip install --upgrade pip setuptools wheel
+          pip install -e ".[dev,ml,quantum,docs]"
+
+      - name: Determine benchmark suite
+        id: suite
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "suite=smoke" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "suite=standard" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "suite=${{ github.event.inputs.suite || 'standard' }}" >> $GITHUB_OUTPUT
+          else
+            echo "suite=smoke" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run benchmark suite
+        run: |
+          cd optilibria/benchmarks
+          python nightly_benchmark.py --suite ${{ steps.suite.outputs.suite }}
+        env:
+          PYTHONPATH: ${{ github.workspace }}/optilibria
+
+      - name: Check for performance regressions
+        id: regression_check
+        if: github.event_name != 'pull_request'
+        run: |
+          cd optilibria/benchmarks
+          python -c "
+          from benchmark_history import BenchmarkHistory
+          import json
+          import sys
+          from pathlib import Path
+
+          # Load latest results
+          results_dir = Path('benchmark_results')
+          latest_file = results_dir / '${{ steps.suite.outputs.suite }}_latest.json'
+
+          if latest_file.exists():
+              with open(latest_file, 'r') as f:
+                  results = json.load(f)
+
+              # Initialize history tracker
+              history = BenchmarkHistory()
+
+              # Record run
+              run_id = history.record_run(results)
+
+              # Update baselines if on main branch
+              if '${{ github.ref }}' == 'refs/heads/main':
+                  history.update_baselines('${{ steps.suite.outputs.suite }}')
+
+              # Check for regressions
+              regressions = history.detect_regressions(run_id)
+
+              if regressions:
+                  print('::warning::Performance regressions detected!')
+                  for reg in regressions:
+                      print(f\"::warning::{reg['method']} on {reg['problem_key']}: \"
+                            f\"{reg['metric']} degraded by {reg['degradation_percent']:.1f}%\")
+
+                  # Set output for next steps
+                  print('::set-output name=has_regressions::true')
+
+                  # Save regressions for artifact
+                  with open('regressions.json', 'w') as f:
+                      json.dump(regressions, f, indent=2)
+              else:
+                  print('No performance regressions detected.')
+                  print('::set-output name=has_regressions::false')
+
+              history.close()
+          "
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results-${{ matrix.python-version }}
+          path: |
+            optilibria/benchmarks/benchmark_results/*.json
+            optilibria/benchmarks/benchmark_results/*.html
+            optilibria/benchmarks/benchmark_results/*.md
+            optilibria/benchmarks/benchmark_results/*.csv
+          retention-days: 90
+
+      - name: Upload regression report
+        if: steps.regression_check.outputs.has_regressions == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: regression-report-${{ matrix.python-version }}
+          path: optilibria/benchmarks/regressions.json
+          retention-days: 30
+
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // Read the markdown report
+            const reportPath = path.join(
+              process.env.GITHUB_WORKSPACE,
+              'optilibria/benchmarks/benchmark_results',
+              '${{ steps.suite.outputs.suite }}_latest.md'
+            );
+
+            if (fs.existsSync(reportPath)) {
+              const report = fs.readFileSync(reportPath, 'utf8');
+
+              // Create comment
+              const comment = `## 🏃 Optilibria Benchmark Results\n\n${report}`;
+
+              // Find existing comment
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number
+              });
+
+              const botComment = comments.find(comment =>
+                comment.user.type === 'Bot' &&
+                comment.body.includes('Optilibria Benchmark Results')
+              );
+
+              if (botComment) {
+                // Update existing comment
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: comment
+                });
+              } else {
+                // Create new comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: comment
+                });
+              }
+            }
+
+      - name: Deploy benchmark dashboard
+        if: github.ref == 'refs/heads/main' && matrix.python-version == '3.11'
+        run: |
+          # This step would deploy the HTML dashboard to GitHub Pages or similar
+          # For now, just prepare the files
+          cd optilibria/benchmarks/benchmark_results
+
+          # Create index.html that links to all reports
+          python -c "
+          from pathlib import Path
+          import json
+          from datetime import datetime
+
+          html = '''<!DOCTYPE html>
+          <html>
+          <head>
+              <title>Optilibria Benchmark Dashboard</title>
+              <style>
+                  body { font-family: sans-serif; margin: 40px; }
+                  h1 { color: #667eea; }
+                  .report-list { list-style: none; padding: 0; }
+                  .report-item {
+                      background: #f7f7f7;
+                      padding: 15px;
+                      margin: 10px 0;
+                      border-radius: 5px;
+                  }
+                  .report-item a {
+                      color: #667eea;
+                      text-decoration: none;
+                      font-weight: bold;
+                  }
+                  .metadata { color: #666; font-size: 0.9em; margin-top: 5px; }
+              </style>
+          </head>
+          <body>
+              <h1>📊 Optilibria Benchmark Dashboard</h1>
+              <p>Latest benchmark results and performance trends</p>
+              <ul class=\"report-list\">
+          '''
+
+          # Find all HTML reports
+          for html_file in sorted(Path('.').glob('*.html'), reverse=True):
+              if html_file.name != 'index.html':
+                  # Try to get metadata from corresponding JSON
+                  json_file = html_file.with_suffix('.json')
+                  metadata = ''
+                  if json_file.exists():
+                      with open(json_file, 'r') as f:
+                          data = json.load(f)
+                          timestamp = data.get('start_time', '')
+                          suite = data.get('suite_name', '')
+                          duration = data.get('total_duration', 0)
+                          metadata = f'Suite: {suite} | Duration: {duration:.1f}s | {timestamp}'
+
+                  html += f'''
+                      <li class=\"report-item\">
+                          <a href=\"{html_file.name}\">{html_file.stem}</a>
+                          <div class=\"metadata\">{metadata}</div>
+                      </li>
+                  '''
+
+          html += '''
+              </ul>
+              <hr>
+              <p style=\"color: #666; font-size: 0.9em;\">
+                  Generated: ''' + datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC') + '''
+              </p>
+          </body>
+          </html>'''
+
+          with open('index.html', 'w') as f:
+              f.write(html)
+          "
+
+      - name: Create issue for critical regressions
+        if: >
+          github.ref == 'refs/heads/main' &&
+          steps.regression_check.outputs.has_regressions == 'true' &&
+          matrix.python-version == '3.11'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Load regression data
+            const regressions = JSON.parse(
+              fs.readFileSync('optilibria/benchmarks/regressions.json', 'utf8')
+            );
+
+            // Filter critical regressions
+            const critical = regressions.filter(r => r.alert_level === 'critical');
+
+            if (critical.length > 0) {
+              // Create issue body
+              let body = '## 🚨 Critical Performance Regressions Detected\n\n';
+              body += `Benchmark run on ${new Date().toISOString()} detected critical performance regressions:\n\n`;
+
+              for (const reg of critical) {
+                body += `### ${reg.method} on ${reg.problem_key}\n`;
+                body += `- **Metric:** ${reg.metric}\n`;
+                body += `- **Baseline:** ${reg.baseline_value.toFixed(2)}\n`;
+                body += `- **Current:** ${reg.current_value.toFixed(2)}\n`;
+                body += `- **Degradation:** ${reg.degradation_percent.toFixed(1)}%\n`;
+                body += `- **Confidence:** ${(reg.confidence * 100).toFixed(1)}%\n\n`;
+              }
+
+              body += '\n### Action Required\n';
+              body += '- [ ] Investigate the cause of regression\n';
+              body += '- [ ] Review recent commits for performance impacts\n';
+              body += '- [ ] Run local benchmarks to confirm\n';
+              body += '- [ ] Fix or document the performance change\n';
+
+              // Create issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Performance Regression: ${critical.length} critical issue(s) detected`,
+                body: body,
+                labels: ['performance', 'regression', 'benchmark']
+              });
+            }
