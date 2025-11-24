@@ -123,7 +123,7 @@ jobs:
             MEZAN/ATLAS/atlas-core/htmlcov/
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: MEZAN/ATLAS/atlas-core/coverage.xml
           flags: integration
